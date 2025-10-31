@@ -216,7 +216,8 @@ function htmlPage() {
     --muted: #a0a0a0;
     --accent: #dc143c; /* Crimson */
     --accent-2: #ff4040;
-    --card-border: rgba(220, 20, 60, 0.25);
+    --card-border: rgba(220, 20, 60, 0.5);
+     --glow-shadow: 0 0 8px var(--accent), 0 0 16px var(--accent-2);
     color-scheme: dark;
   }
   html,body{
@@ -224,29 +225,122 @@ function htmlPage() {
     font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     color: var(--muted);
   }
-  .container{max-width:1200px; margin:0 auto; padding:16px;}
+  .container{max-width:1200px; margin:0 auto; padding: 16px 16px 100px 16px;}
   header{
     text-align:center;
-    padding: 20px 0;
+    padding: 10px 0 20px 0;
   }
   .logo{
     font-size: 48px;
     font-weight: bold;
     color: var(--accent);
-    text-shadow: 0 0 10px var(--accent-2), 0 0 20px var(--accent);
+    text-shadow: var(--glow-shadow);
   }
   header h1{font-size: 24px; margin: 0; color:#fff; letter-spacing: 0.5px;}
-  header p{margin:4px 0 0; color:var(--muted); font-size:14px;}
 
-  .panel{
+  /* Pills */
+  .pills-container {
+    display:flex; gap:10px; flex-wrap:wrap; justify-content: center;
+    margin-bottom: 24px;
+  }
+  .pill{
+    background: #222; color:#fff; padding:6px 12px;
+    border-radius:16px; font-size:13px; border: 1px solid #444;
+  }
+  .pill#pillSelected { background: var(--accent); border-color: var(--accent-2); }
+
+
+  /* Proxy Grid */
+  .proxy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .proxy-card {
     background: var(--panel);
-    border:1px solid var(--card-border);
-    border-radius:12px;
-    padding:16px;
-    margin-bottom: 20px;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 0 0 rgba(0,0,0,0);
+  }
+  .proxy-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-2);
+    box-shadow: 0 4px 15px rgba(220, 20, 60, 0.2);
+  }
+  .proxy-card.selected {
+    background: rgba(220, 20, 60, 0.2);
+    border-color: var(--accent);
+    box-shadow: var(--glow-shadow);
+  }
+  .proxy-card .country { font-weight: bold; font-size: 16px; color: #fff; }
+  .proxy-card .label { font-size: 14px; color: var(--muted); margin: 4px 0; min-height: 1.2em; }
+  .proxy-card .ip-port { font-size: 13px; color: var(--accent-2); font-family: 'Courier New', monospace;}
+
+
+  /* Floating Buttons */
+  .fab {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    transition: all 0.3s ease;
+    z-index: 999;
+  }
+  .fab:hover { transform: scale(1.1); }
+  .fab-search {
+    top: 20px;
+    right: 20px;
+    background-color: #333;
+    border: 1px solid var(--card-border);
+  }
+  .fab-generate {
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--accent);
+    box-shadow: var(--glow-shadow);
   }
 
-  .controls{display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:16px;}
+  /* Filter Panel */
+  .filter-panel {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    max-width: 350px;
+    height: 100%;
+    background: #0a0404;
+    border-left: 1px solid var(--card-border);
+    z-index: 1001;
+    transition: right 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+  }
+  .filter-panel.open { right: 0; }
+  .filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .filter-header h2 { margin: 0; color: #fff; }
+  .close-btn { font-size: 28px; cursor: pointer; color: var(--muted); line-height: 1;}
+  .panel-content { padding: 16px; }
+
+
+  /* General controls */
+  .controls{display:grid; grid-template-columns: 1fr; gap:16px;}
   label{display:block; font-weight:600; font-size:14px; color:#fff; margin-bottom:8px;}
   input, select, textarea{
     width: 100%;
@@ -260,12 +354,10 @@ function htmlPage() {
     font-size:14px;
     transition: border-color 0.2s;
   }
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--accent);
-  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   input::placeholder{color: #555;}
 
-  .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items: center;}
+  .toolbar{display:flex; flex-direction:column; gap:10px; margin-top:20px;}
   button{
     background: var(--accent);
     color:#fff; border:0; padding:12px 18px; border-radius:8px;
@@ -284,53 +376,19 @@ function htmlPage() {
   }
   button.secondary:hover{ background: #222; color: #fff; }
 
-  .table-wrap{
-    margin-top:16px; border-radius:10px; overflow-x:auto;
-    border:1px solid var(--card-border);
-    background: var(--panel);
-  }
-  table{width:100%; border-collapse:collapse; color:#fff; font-size:14px;}
-  thead th{
-    background: #1a0a0a;
-    color: var(--muted); padding:12px 15px; text-align:left;
-    font-weight:700; font-size:13px;
-    position: sticky; top: 0;
-  }
-  tbody td{padding:12px 15px; border-top:1px solid #2a1a1a; vertical-align:middle;}
-  tbody tr:hover td{background: rgba(220, 20, 60, 0.1);}
-
-  .counts{margin-top:12px; color:var(--muted); font-size:14px; text-align:center;}
+  /* Modal & Paging */
+   .counts{margin-top:16px; color:var(--muted); font-size:14px; text-align:center;}
   .paging-controls button { padding: 8px 12px; font-size: 13px; }
-
-  .badges{display:flex; gap:10px; flex-wrap:wrap; justify-content: center; margin-top:10px;}
-  .pill{
-    background: #333; color:#fff; padding:6px 12px;
-    border-radius:16px; font-size:13px;
-  }
-  .pill#pillSelected { background: var(--accent); }
-
-  .output-card h2{margin:0 0 12px 0; color:#fff; font-size:16px;}
-  textarea{min-height:120px; resize:vertical; font-family: 'Courier New', Courier, monospace; background: #000;}
   .output-row{display:flex; flex-direction: column; gap:16px; margin-bottom: 16px;}
-  @media (min-width: 600px) {
-    .output-row{flex-direction: row;}
-  }
+  @media (min-width: 600px) { .output-row{flex-direction: row;} }
+  textarea{min-height:120px; resize:vertical; font-family: 'Courier New', Courier, monospace; background: #000;}
 
   .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.7);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); display: none; align-items: center;
+    justify-content: center; z-index: 1000;
   }
-  .modal-overlay.active {
-    display: flex;
-  }
+  .modal-overlay.active { display: flex; }
   .modal-content {
     background: var(--panel);
     border: 1px solid var(--card-border);
@@ -341,13 +399,8 @@ function htmlPage() {
     position: relative;
   }
   .modal-close {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 24px;
-    color: var(--muted);
-    cursor: pointer;
-    line-height: 1;
+    position: absolute; top: 10px; right: 15px; font-size: 24px;
+    color: var(--muted); cursor: pointer; line-height: 1;
   }
 </style>
 </head>
@@ -356,10 +409,31 @@ function htmlPage() {
     <header>
       <div class="logo">RB</div>
       <h1>Red Bunny</h1>
-      <p>VLESS & Trojan Generator</p>
     </header>
 
-    <div class="panel">
+    <div class="pills-container">
+        <span class="pill" id="pillTotal">Total: 0</span>
+        <span class="pill" id="pillFiltered">Visible: 0</span>
+        <span class="pill" id="pillSelected">Selected: 0</span>
+    </div>
+
+    <div id="proxyGrid" class="proxy-grid">
+      <!-- Proxy cards will be injected here by JS -->
+    </div>
+     <div class="counts" id="counts"></div>
+  </div>
+
+  <!-- Floating Buttons -->
+  <button id="fabSearch" class="fab fab-search" title="Search & Filter">🔍</button>
+  <button id="fabGenerate" class="fab fab-generate" title="Generate for Selected Proxies">Generate</button>
+
+  <!-- Filter Panel (hidden by default) -->
+  <div id="filterPanel" class="filter-panel">
+    <div class="filter-header">
+      <h2>Filter Options</h2>
+      <span id="closeFilterPanel" class="close-btn">&times;</span>
+    </div>
+    <div class="panel-content">
       <div class="controls">
         <div>
           <label for="countryFilter">Filter by Country</label>
@@ -372,59 +446,37 @@ function htmlPage() {
           <input id="search" placeholder="e.g. Singapore, 43.218, :443" />
         </div>
       </div>
-      <div class="toolbar" style="margin-top:20px;">
-        <button id="btnReload" class="secondary">Reload List</button>
-        <div style="flex-grow: 1;"></div>
-        <button id="btnShowGenerateModal" title="Generate for selected proxies">Generate for Selected Proxies</button>
-      </div>
-    </div>
-
-    <div class="panel">
       <div class="toolbar">
         <button id="btnSelectFiltered" class="secondary">Select All Visible</button>
         <button id="btnClearSelection" class="secondary">Clear Selection</button>
+        <button id="btnReload" class="secondary">Reload List</button>
       </div>
-      <div class="badges">
-        <span class="pill" id="pillTotal">Total: 0</span>
-        <span class="pill" id="pillFiltered">Visible: 0</span>
-        <span class="pill" id="pillSelected">Selected: 0</span>
-      </div>
-      <div class="table-wrap">
-        <table id="tbl">
-          <thead>
-            <tr>
-              <th style="width:40px"><input type="checkbox" id="chkAllPage" title="Select all visible" /></th>
-              <th>Proxy Name</th>
-              <th>IP Address</th>
-              <th>Port</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-      <div class="counts" id="counts"></div>
-    </div>
-
-    <div class="panel output-card">
-        <h2>Results</h2>
-        <div class="output-row">
-          <div>
-            <label for="outTrojan">Trojan</label>
-            <textarea id="outTrojan" readonly></textarea>
-            <button class="secondary" data-copy="#outTrojan" style="margin-top:8px;">Copy</button>
-          </div>
-          <div>
-            <label for="outVless">VLESS</label>
-            <textarea id="outVless" readonly></textarea>
-            <button class="secondary" data-copy="#outVless" style="margin-top:8px;">Copy</button>
-          </div>
-        </div>
-
-        <label for="outCombined">Combined</label>
-        <textarea id="outCombined" readonly style="min-height:80px"></textarea>
-        <button class="secondary" data-copy="#outCombined" style="margin-top:8px;">Copy All</button>
     </div>
   </div>
+
+  <!-- Output Modal -->
+    <div class="modal-overlay" id="outputModal">
+        <div class="modal-content">
+            <span class="modal-close" data-close-modal="outputModal">&times;</span>
+            <h2>Results</h2>
+            <div class="output-row">
+                <div>
+                    <label for="outTrojan">Trojan</label>
+                    <textarea id="outTrojan" readonly></textarea>
+                    <button class="secondary" data-copy="#outTrojan" style="margin-top:8px;">Copy</button>
+                </div>
+                <div>
+                    <label for="outVless">VLESS</label>
+                    <textarea id="outVless" readonly></textarea>
+                    <button class="secondary" data-copy="#outVless" style="margin-top:8px;">Copy</button>
+                </div>
+            </div>
+            <label for="outCombined">Combined</label>
+            <textarea id="outCombined" readonly style="min-height:80px"></textarea>
+            <button class="secondary" data-copy="#outCombined" style="margin-top:8px;">Copy All</button>
+        </div>
+    </div>
+
 
   <div class="modal-overlay" id="generateModal">
     <div class="modal-content">
@@ -461,270 +513,284 @@ function htmlPage() {
 
 <script>
 const $ = s => document.querySelector(s);
-const PAGE_SIZE = 200;
+const PAGE_SIZE = 100;
 
 let ALL_ITEMS = [];
 let FILTERED_ITEMS = [];
-let SELECTED = new Map(); // key => {ip, port, label}
+let SELECTED = new Map(); // key => {ip, port, label, country}
 let currentPage = 1;
 
-// Element Refs
-const elSearch = $("#search");
-const elCountryFilter = $("#countryFilter");
-const elTBody = $("#tbody");
-const elChkAllPage = $("#chkAllPage");
-const elCounts = $("#counts");
-const elPillTotal = $("#pillTotal");
-const elPillFiltered = $("#pillFiltered");
-const elPillSelected = $("#pillSelected");
-const modal = $("#generateModal");
-const showModalBtn = $("#btnShowGenerateModal");
-const closeModalBtn = $("#modalCloseBtn");
-const confirmGenerateBtn = $("#btnConfirmGenerate");
+// --- Element Refs ---
+const el = {
+    search: $("#search"),
+    countryFilter: $("#countryFilter"),
+    proxyGrid: $("#proxyGrid"),
+    counts: $("#counts"),
+    pillTotal: $("#pillTotal"),
+    pillFiltered: $("#pillFiltered"),
+    pillSelected: $("#pillSelected"),
+
+    // Modals & Panels
+    generateModal: $("#generateModal"),
+    outputModal: $("#outputModal"),
+    filterPanel: $("#filterPanel"),
+
+    // Buttons
+    fabSearch: $("#fabSearch"),
+    fabGenerate: $("#fabGenerate"),
+    closeFilterPanel: $("#closeFilterPanel"),
+    btnReload: $("#btnReload"),
+    btnSelectFiltered: $("#btnSelectFiltered"),
+    btnClearSelection: $("#btnClearSelection"),
+    btnConfirmGenerate: $("#btnConfirmGenerate"),
+};
 
 // --- Helper Functions ---
 function populateCountryFilter() {
     const countries = new Set(ALL_ITEMS.map(item => item.country));
     const sortedCountries = [...countries].sort();
-
-    elCountryFilter.innerHTML = '<option value="all">All Countries</option>';
+    el.countryFilter.innerHTML = '<option value="all">All Countries</option>';
     for (const country of sortedCountries) {
         if (country && country !== 'Unknown') {
             const option = document.createElement('option');
             option.value = country;
             option.textContent = country;
-            elCountryFilter.appendChild(option);
+            el.countryFilter.appendChild(option);
         }
     }
 }
 
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+}
+
+function keyOf(x) { return `${x.ip}:${x.port}`; }
+
 // --- Core Functions ---
 async function loadData() {
-  const src = 'txt';
-  showModalBtn.disabled = true;
-  showModalBtn.textContent = 'Loading...';
-  try {
-    const res = await fetch(\`/api/proxies?source=\${encodeURIComponent(src)}\`);
-    if (!res.ok) throw new Error('Network response was not ok');
-    const j = await res.json();
-    ALL_ITEMS = j.items || [];
-    populateCountryFilter();
-    filterData();
-  } catch (err) {
-    console.error("Failed to load data:", err);
-    elTBody.innerHTML = '<tr><td colspan="4" style="padding:16px;color:var(--accent);">Failed to load proxy list.</td></tr>';
-  } finally {
-    showModalBtn.disabled = false;
-    showModalBtn.textContent = 'Generate for Selected Proxies';
-  }
+    el.fabGenerate.disabled = true;
+    el.fabGenerate.textContent = '...';
+    try {
+        const res = await fetch(`/api/proxies?source=txt`);
+        if (!res.ok) throw new Error('Network response was not ok');
+        const j = await res.json();
+        ALL_ITEMS = j.items || [];
+        populateCountryFilter();
+        filterData();
+    } catch (err) {
+        console.error("Failed to load data:", err);
+        el.proxyGrid.innerHTML = `<p style="color:var(--accent);grid-column: 1 / -1;">Failed to load proxy list.</p>`;
+    } finally {
+        el.fabGenerate.disabled = false;
+        el.fabGenerate.textContent = 'Generate';
+    }
 }
 
 function filterData() {
-  const q = elSearch.value.trim().toLowerCase();
-  const selectedCountry = elCountryFilter.value;
+    const q = el.search.value.trim().toLowerCase();
+    const selectedCountry = el.countryFilter.value;
 
-  let items = ALL_ITEMS;
-
-  if (selectedCountry !== 'all') {
-    items = items.filter(x => x.country === selectedCountry);
-  }
-
-  if (q) {
-    items = items.filter(x =>
-      (x.label || "").toLowerCase().includes(q) ||
-      (x.ip || "").toLowerCase().includes(q) ||
-      String(x.port || "").toLowerCase().includes(q)
-    );
-  }
-
-  FILTERED_ITEMS = items;
-  currentPage = 1;
-  render();
+    let items = ALL_ITEMS;
+    if (selectedCountry !== 'all') {
+        items = items.filter(x => x.country === selectedCountry);
+    }
+    if (q) {
+        items = items.filter(x =>
+            (x.label || "").toLowerCase().includes(q) ||
+            (x.ip || "").toLowerCase().includes(q) ||
+            String(x.port || "").toLowerCase().includes(q)
+        );
+    }
+    FILTERED_ITEMS = items;
+    currentPage = 1;
+    render();
 }
-
-function keyOf(x) { return \`\${x.ip}:\${x.port}\`; }
 
 function render() {
-  const total = FILTERED_ITEMS.length;
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  if (currentPage > pages) currentPage = pages;
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const slice = FILTERED_ITEMS.slice(start, start + PAGE_SIZE);
+    const total = FILTERED_ITEMS.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const slice = FILTERED_ITEMS.slice(start, end);
 
-  elTBody.innerHTML = slice.map(it => {
-    const k = keyOf(it);
-    const checked = SELECTED.has(k) ? "checked" : "";
-    const name = it.label ? escapeHtml(it.label) : "(No Name)";
-    return \`<tr>
-      <td><input type="checkbox" class="rowchk" data-key="\${k}" \${checked} /></td>
-      <td>\${name}</td>
-      <td>\${it.ip}</td>
-      <td>\${it.port}</td>
-    </tr>\`;
-  }).join('') || '<tr><td colspan="4" style="padding:16px;text-align:center;">No data found.</td></tr>';
+    el.proxyGrid.innerHTML = slice.map(it => {
+        const k = keyOf(it);
+        const selectedClass = SELECTED.has(k) ? "selected" : "";
+        const name = it.label ? escapeHtml(it.label) : "(No Name)";
+        const country = it.country ? escapeHtml(it.country) : "Unknown";
+        return `<div class="proxy-card ${selectedClass}" data-key="${k}">
+            <div class="country">${country}</div>
+            <div class="label">${name}</div>
+            <div class="ip-port">${it.ip}:${it.port}</div>
+        </div>`;
+    }).join('') || `<p style="color:var(--muted);grid-column: 1 / -1;text-align:center;">No proxies found.</p>`;
 
-  bindRowChecks();
-
-  elChkAllPage.checked = slice.length > 0 && slice.every(it => SELECTED.has(keyOf(it)));
-  elCounts.innerHTML = renderPaging(total, pages);
-  bindPaging();
-  updatePills();
-}
-
-function bindRowChecks() {
-  elTBody.querySelectorAll(".rowchk").forEach(chk => {
-    chk.addEventListener("change", () => {
-      const key = chk.getAttribute("data-key");
-      const item = ALL_ITEMS.find(x => keyOf(x) === key);
-      if (!item) return;
-      if (chk.checked) SELECTED.set(key, item);
-      else SELECTED.delete(key);
-      updatePills();
-    });
-  });
-}
-
-function bindPaging() {
-  elCounts.querySelectorAll("[data-page]").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      const p = btn.getAttribute("data-page");
-      if (p === "prev") currentPage = Math.max(1, currentPage - 1);
-      else if (p === "next") currentPage = Math.min(pages, currentPage + 1);
-      else currentPage = parseInt(p, 10);
-      render();
-    });
-  });
+    el.counts.innerHTML = renderPaging(total, totalPages);
+    bindPaging();
+    updatePills();
 }
 
 function renderPaging(total, pages) {
-  if (total <= PAGE_SIZE) return \`\${total} results\`;
-  let pageLinks = "";
-  const maxShow = 5;
-  let start = Math.max(1, currentPage - 2);
-  let end = Math.min(pages, start + maxShow - 1);
-  if (end - start + 1 < maxShow) start = Math.max(1, end - maxShow + 1);
+    if (total <= PAGE_SIZE) return `${total} results`;
+    let pageLinks = "";
+    const maxShow = 5;
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(pages, start + maxShow - 1);
+    if (end - start + 1 < maxShow) start = Math.max(1, end - maxShow + 1);
 
-  pageLinks += \`<button class="secondary paging-controls" data-page="prev" \${currentPage === 1 ? 'disabled' : ''}>◀</button>\`;
-  for (let p = start; p <= end; p++) {
-    const act = p === currentPage ? "style='background:var(--accent); color:#fff; border-color:var(--accent)'" : "";
-    pageLinks += \`<button class="secondary paging-controls" data-page="\${p}" \${act}>\${p}</button>\`;
-  }
-  pageLinks += \`<button class="secondary paging-controls" data-page="next" \${currentPage === pages ? 'disabled' : ''}>▶</button>\`;
+    pageLinks += `<button class="secondary paging-controls" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}>◀</button>`;
+    for (let p = start; p <= end; p++) {
+        const act = p === currentPage ? "style='background:var(--accent); color:#fff; border-color:var(--accent)'" : "";
+        pageLinks += `<button class="secondary paging-controls" data-page="${p}" ${act}>${p}</button>`;
+    }
+    pageLinks += `<button class="secondary paging-controls" data-page="next" ${currentPage === pages ? 'disabled' : ''}>▶</button>`;
+    return `Page ${currentPage}/${pages} (${total} results) <div style="margin-top:8px;">${pageLinks}</div>`;
+}
 
-  return \`Page \${currentPage}/\${pages} (\${total} results) <div style="margin-top:8px;">\${pageLinks}</div>\`;
+function bindPaging() {
+    el.counts.querySelectorAll("[data-page]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const p = btn.getAttribute("data-page");
+            if (p === "prev") currentPage = Math.max(1, currentPage - 1);
+            else if (p === "next") currentPage = Math.min(Math.ceil(FILTERED_ITEMS.length / PAGE_SIZE), currentPage + 1);
+            else currentPage = parseInt(p, 10);
+            render();
+        });
+    });
 }
 
 function updatePills() {
-  elPillTotal.textContent = "Total: " + ALL_ITEMS.length;
-  elPillFiltered.textContent = "Visible: " + FILTERED_ITEMS.length;
-  elPillSelected.textContent = "Selected: " + SELECTED.size;
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
+    el.pillTotal.textContent = "Total: " + ALL_ITEMS.length;
+    el.pillFiltered.textContent = "Visible: " + FILTERED_ITEMS.length;
+    el.pillSelected.textContent = "Selected: " + SELECTED.size;
 }
 
 async function handleGenerate() {
-  const selected = Array.from(SELECTED.values());
-  if (!selected.length) {
-    alert("Please select at least one proxy.");
-    return;
-  }
-  confirmGenerateBtn.textContent = 'Generating...';
-  confirmGenerateBtn.disabled = true;
+    const selected = Array.from(SELECTED.values());
+    if (selected.length === 0) {
+        alert("Please select at least one proxy.");
+        return;
+    }
+    el.btnConfirmGenerate.textContent = 'Generating...';
+    el.btnConfirmGenerate.disabled = true;
 
-  try {
-    const payload = {
-      selected,
-      frontDomain: $("#frontDomain").value.trim(),
-      sni: $("#sni").value.trim(),
-      hostHeader: $("#hostHeader").value.trim(),
-      cfTlsPort: +$("#cfTlsPort").value || 443,
-      genTrojan: $("#genTrojan").checked,
-      genVless: $("#genVless").checked
-    };
-    const res = await fetch("/generate", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const j = await res.json();
-    if (!j.ok) throw new Error(j.error || "Unknown error");
+    try {
+        const payload = {
+            selected,
+            frontDomain: $("#frontDomain").value.trim(),
+            sni: $("#sni").value.trim(),
+            hostHeader: $("#hostHeader").value.trim(),
+            cfTlsPort: +$("#cfTlsPort").value || 443,
+            genTrojan: $("#genTrojan").checked,
+            genVless: $("#genVless").checked
+        };
+        const res = await fetch("/generate", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const j = await res.json();
+        if (!j.ok) throw new Error(j.error || "Unknown error");
 
-    $("#outTrojan").value = (j.trojan || []).join("\\n");
-    $("#outVless").value = (j.vless || []).join("\\n");
-    $("#outCombined").value = j.combined || "";
-    modal.classList.remove("active");
-  } catch (err) {
-    alert("Failed to generate: " + err.message);
-  } finally {
-    confirmGenerateBtn.textContent = 'Confirm & Generate';
-    confirmGenerateBtn.disabled = false;
-  }
+        $("#outTrojan").value = (j.trojan || []).join("\n");
+        $("#outVless").value = (j.vless || []).join("\n");
+        $("#outCombined").value = j.combined || "";
+
+        el.generateModal.classList.remove("active");
+        el.outputModal.classList.add("active");
+
+    } catch (err) {
+        alert("Failed to generate: " + err.message);
+    } finally {
+        el.btnConfirmGenerate.textContent = 'Confirm & Generate';
+        el.btnConfirmGenerate.disabled = false;
+    }
 }
 
 // --- Event Listeners ---
-$("#btnReload").addEventListener("click", loadData);
-$("#search").addEventListener("input", () => {
-  clearTimeout(window.__deb);
-  window.__deb = setTimeout(filterData, 200);
+el.btnReload.addEventListener("click", loadData);
+el.search.addEventListener("input", () => {
+    clearTimeout(window.__deb);
+    window.__deb = setTimeout(filterData, 200);
 });
-elCountryFilter.addEventListener("change", filterData);
-$("#btnSelectFiltered").addEventListener("click", () => {
-  const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  slice.forEach(it => SELECTED.set(keyOf(it), it));
-  render();
-});
-$("#btnClearSelection").addEventListener("click", () => {
-  SELECTED.clear();
-  render();
-});
+el.countryFilter.addEventListener("change", filterData);
 
-showModalBtn.addEventListener("click", () => {
-  if (SELECTED.size === 0) {
-    alert("Please select at least one proxy before generating.");
-    return;
-  }
-  modal.classList.add("active");
-});
-
-closeModalBtn.addEventListener("click", () => modal.classList.remove("active"));
-modal.addEventListener("click", (e) => {
-  if (e.target === modal) modal.classList.remove("active");
-});
-
-confirmGenerateBtn.addEventListener("click", handleGenerate);
-
-document.querySelectorAll("button[data-copy]").forEach(b => {
-  b.addEventListener("click", async () => {
-    const t = document.querySelector(b.getAttribute("data-copy"));
-    if (!t || !t.value) return;
-    try {
-      await navigator.clipboard.writeText(t.value);
-      b.textContent = "Copied!";
-    } catch {
-      t.select();
-      document.execCommand("copy");
-      b.textContent = "Copied!";
-    }
-    setTimeout(() => (b.textContent = "Copy"), 1500);
-  });
-});
-
-elChkAllPage.addEventListener("change", () => {
-  const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  if (elChkAllPage.checked) {
+el.btnSelectFiltered.addEventListener("click", () => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const slice = FILTERED_ITEMS.slice(start, start + PAGE_SIZE);
     slice.forEach(it => SELECTED.set(keyOf(it), it));
-  } else {
-    slice.forEach(it => SELECTED.delete(keyOf(it)));
-  }
-  render();
+    render();
+});
+el.btnClearSelection.addEventListener("click", () => {
+    SELECTED.clear();
+    render();
 });
 
-// Initial Load
+// Proxy Card Selection
+el.proxyGrid.addEventListener("click", (e) => {
+    const card = e.target.closest(".proxy-card");
+    if (!card) return;
+    const key = card.getAttribute("data-key");
+    const item = ALL_ITEMS.find(x => keyOf(x) === key);
+    if (!item) return;
+
+    if (SELECTED.has(key)) {
+        SELECTED.delete(key);
+        card.classList.remove("selected");
+    } else {
+        SELECTED.set(key, item);
+        card.classList.add("selected");
+    }
+    updatePills();
+});
+
+// Panel & Modal Controls
+el.fabSearch.addEventListener("click", () => el.filterPanel.classList.add("open"));
+el.closeFilterPanel.addEventListener("click", () => el.filterPanel.classList.remove("open"));
+
+el.fabGenerate.addEventListener("click", () => {
+    if (SELECTED.size === 0) {
+        alert("Please select at least one proxy before generating.");
+        return;
+    }
+    el.generateModal.classList.add("active");
+});
+el.btnConfirmGenerate.addEventListener("click", handleGenerate);
+
+// Generic modal close logic
+document.querySelectorAll(".modal-overlay").forEach(modal => {
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.remove("active");
+    });
+});
+document.querySelectorAll(".modal-close").forEach(btn => {
+    btn.addEventListener("click", () => {
+        btn.closest(".modal-overlay").classList.remove("active");
+    });
+});
+
+// Clipboard copy
+document.querySelectorAll("button[data-copy]").forEach(b => {
+    b.addEventListener("click", async () => {
+        const t = $(b.getAttribute("data-copy"));
+        if (!t || !t.value) return;
+        try {
+            await navigator.clipboard.writeText(t.value);
+            b.textContent = "Copied!";
+        } catch {
+            t.select();
+            document.execCommand("copy");
+            b.textContent = "Copied!";
+        }
+        setTimeout(() => (b.textContent = "Copy"), 1500);
+    });
+});
+
+// --- Initial Load ---
 loadData();
 </script>
 </body>
