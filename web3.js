@@ -187,8 +187,9 @@ function parseJSONProxies(json) {
       if (!port) port = 443;
 
       let label = item.label || item.name || item.remark || item.tag || item.loc || item.location || item.country || item.note || "";
+      let country = item.loc || 'Unknown';
 
-      if (ip && port) out.push({ ip, port, label: sanitizeLabel(label) });
+      if (ip && port) out.push({ ip, port, label: sanitizeLabel(label), country: country });
     }
   }
   return out;
@@ -541,25 +542,6 @@ const closeModalBtn = $("#modalCloseBtn");
 const confirmGenerateBtn = $("#btnConfirmGenerate");
 
 // --- Helper Functions ---
-// Set of common ISO 3166-1 alpha-2 country codes, plus common aliases like UK
-const COUNTRY_CODES = new Set([
-    'US', 'SG', 'ID', 'JP', 'DE', 'GB', 'UK', 'NL', 'FR', 'CA', 'AU', 'HK', 'KR', 'IN', 'TW', 'RU', 'BR', 'ZA',
-    'AE', 'CH', 'SE', 'ES', 'IT', 'PL', 'TR', 'VN', 'MY', 'TH', 'PH', 'NZ', 'IE', 'CN', 'FI', 'NO'
-]);
-
-function getCountryFromLabel(label) {
-    if (!label) return 'Unknown';
-    // Split the label by common delimiters and check each part.
-    const words = label.toUpperCase().split(/[\s\[\]\(\)-.,|]+/);
-    for (const word of words) {
-        // Find the first 2-letter word that is a valid country code.
-        if (word.length === 2 && COUNTRY_CODES.has(word)) {
-            return word;
-        }
-    }
-    return 'Unknown';
-}
-
 function populateCountryFilter() {
     const countries = new Set(ALL_ITEMS.map(item => item.country));
     const sortedCountries = [...countries].sort();
@@ -577,14 +559,14 @@ function populateCountryFilter() {
 
 // --- Core Functions ---
 async function loadData() {
-  const src = 'txt'; // Hardcoded to use proxyList.txt
+  const src = 'json'; // Hardcoded to use KvProxyList.json
   showModalBtn.disabled = true;
   showModalBtn.textContent = 'Loading...';
   try {
     const res = await fetch(\`/api/proxies?source=\${encodeURIComponent(src)}\`);
     if (!res.ok) throw new Error('Network response was not ok');
     const j = await res.json();
-    ALL_ITEMS = (j.items || []).map(item => ({...item, country: getCountryFromLabel(item.label)}));
+    ALL_ITEMS = (j.items || []);
     populateCountryFilter();
     filterData();
   } catch (err) {
