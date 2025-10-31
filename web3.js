@@ -541,13 +541,21 @@ const closeModalBtn = $("#modalCloseBtn");
 const confirmGenerateBtn = $("#btnConfirmGenerate");
 
 // --- Helper Functions ---
+// Set of common ISO 3166-1 alpha-2 country codes, plus common aliases like UK
+const COUNTRY_CODES = new Set([
+    'US', 'SG', 'ID', 'JP', 'DE', 'GB', 'UK', 'NL', 'FR', 'CA', 'AU', 'HK', 'KR', 'IN', 'TW', 'RU', 'BR', 'ZA',
+    'AE', 'CH', 'SE', 'ES', 'IT', 'PL', 'TR', 'VN', 'MY', 'TH', 'PH', 'NZ', 'IE', 'CN', 'FI', 'NO'
+]);
+
 function getCountryFromLabel(label) {
     if (!label) return 'Unknown';
-    const parts = label.replace(/[^a-zA-Z\s]/g, '').trim().split(/\s+/);
-    const commonWords = new Set(['the', 'and', 'proxy', 'v2ray', 'vmess', 'vless', 'trojan', 'server', 'node', 'cdn']);
-    for (const part of parts) {
-        if (part.length > 2 && !commonWords.has(part.toLowerCase())) {
-            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    // Find potential 2-letter country codes (standalone, uppercase)
+    const matches = label.toUpperCase().match(/\b([A-Z]{2})\b/g);
+    if (matches) {
+        for (const code of matches) {
+            if (COUNTRY_CODES.has(code)) {
+                return code;
+            }
         }
     }
     return 'Unknown';
