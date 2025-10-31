@@ -349,6 +349,24 @@ function htmlPage() {
     cursor: pointer;
     line-height: 1;
   }
+  .fab-search {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    cursor: pointer;
+    z-index: 1001;
+    border: none;
+    font-size: 24px;
+  }
 </style>
 </head>
 <body>
@@ -359,30 +377,17 @@ function htmlPage() {
       <p>VLESS & Trojan Generator</p>
     </header>
 
-    <div class="panel">
-      <div class="controls">
-        <div>
-          <label for="countryFilter">Filter by Country</label>
-          <select id="countryFilter">
-            <option value="all">All Countries</option>
-          </select>
-        </div>
-        <div>
-          <label for="search">Search (Name/IP/Port)</label>
-          <input id="search" placeholder="e.g. Singapore, 43.218, :443" />
-        </div>
-      </div>
-      <div class="toolbar" style="margin-top:20px;">
-        <button id="btnReload" class="secondary">Reload List</button>
-        <div style="flex-grow: 1;"></div>
-        <button id="btnShowGenerateModal" title="Generate for selected proxies">Generate for Selected Proxies</button>
-      </div>
-    </div>
+    <button class="fab-search" id="btnShowSearchModal" aria-label="Search and Filter">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    </button>
 
     <div class="panel">
       <div class="toolbar">
+        <button id="btnReload" class="secondary">Reload List</button>
         <button id="btnSelectFiltered" class="secondary">Select All Visible</button>
         <button id="btnClearSelection" class="secondary">Clear Selection</button>
+        <div style="flex-grow: 1;"></div>
+        <button id="btnShowGenerateModal" title="Generate for selected proxies">Generate for Selected Proxies</button>
       </div>
       <div class="badges">
         <span class="pill" id="pillTotal">Total: 0</span>
@@ -423,6 +428,25 @@ function htmlPage() {
         <label for="outCombined">Combined</label>
         <textarea id="outCombined" readonly style="min-height:80px"></textarea>
         <button class="secondary" data-copy="#outCombined" style="margin-top:8px;">Copy All</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="searchModal">
+    <div class="modal-content">
+      <span class="modal-close" id="searchModalCloseBtn">&times;</span>
+      <h2>Search & Filter</h2>
+      <div class="controls" style="margin-top:20px;">
+        <div>
+          <label for="countryFilter">Filter by Country</label>
+          <select id="countryFilter">
+            <option value="all">All Countries</option>
+          </select>
+        </div>
+        <div>
+          <label for="search">Search (Name/IP/Port)</label>
+          <input id="search" placeholder="e.g. Singapore, 43.218, :443" />
+        </div>
+      </div>
     </div>
   </div>
 
@@ -477,10 +501,16 @@ const elCounts = $("#counts");
 const elPillTotal = $("#pillTotal");
 const elPillFiltered = $("#pillFiltered");
 const elPillSelected = $("#pillSelected");
-const modal = $("#generateModal");
+
+// Modal Refs
+const generateModal = $("#generateModal");
 const showModalBtn = $("#btnShowGenerateModal");
 const closeModalBtn = $("#modalCloseBtn");
 const confirmGenerateBtn = $("#btnConfirmGenerate");
+const searchModal = $("#searchModal");
+const showSearchModalBtn = $("#btnShowSearchModal");
+const closeSearchModalBtn = $("#searchModalCloseBtn");
+
 
 // --- Helper Functions ---
 function populateCountryFilter() {
@@ -688,12 +718,18 @@ showModalBtn.addEventListener("click", () => {
     alert("Please select at least one proxy before generating.");
     return;
   }
-  modal.classList.add("active");
+  generateModal.classList.add("active");
 });
 
-closeModalBtn.addEventListener("click", () => modal.classList.remove("active"));
-modal.addEventListener("click", (e) => {
-  if (e.target === modal) modal.classList.remove("active");
+closeModalBtn.addEventListener("click", () => generateModal.classList.remove("active"));
+generateModal.addEventListener("click", (e) => {
+  if (e.target === generateModal) generateModal.classList.remove("active");
+});
+
+showSearchModalBtn.addEventListener("click", () => searchModal.classList.add("active"));
+closeSearchModalBtn.addEventListener("click", () => searchModal.classList.remove("active"));
+searchModal.addEventListener("click", (e) => {
+    if (e.target === searchModal) searchModal.classList.remove("active");
 });
 
 confirmGenerateBtn.addEventListener("click", handleGenerate);
