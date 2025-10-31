@@ -299,11 +299,15 @@ function htmlPage() {
       grid-template-columns: repeat(2, 1fr);
       gap: 8px;
     }
+    .proxy-card {
+        padding: 10px;
+    }
     .proxy-card-label {
         font-size: 13px;
     }
     .proxy-card-ip {
-        font-size: 12px;
+        font-size: 11px;
+        word-break: break-all; /* Allow text to wrap */
     }
   }
   .proxy-card {
@@ -314,7 +318,6 @@ function htmlPage() {
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
-    overflow: hidden;
   }
   .proxy-card:hover {
     transform: translateY(-2px);
@@ -356,7 +359,7 @@ function htmlPage() {
   .counts{margin-top:12px; color:var(--muted); font-size:14px; text-align:center;}
   .paging-controls button { padding: 8px 12px; font-size: 13px; }
 
-  .badges{display:flex; gap:10px; flex-wrap:wrap; justify-content: center; margin-top:10px;}
+  .badges{display:flex; gap:10px; flex-wrap:nowrap; align-items: center; justify-content: space-between; margin-top:10px;}
   .pill{
     background: #333; color:#fff; padding:6px 12px;
     border-radius:16px; font-size:13px;
@@ -562,11 +565,9 @@ function htmlPage() {
 
     <div class="panel">
       <div class="badges" style="justify-content: space-between; align-items:center; margin-bottom: 16px;">
-        <div>
-          <span class="pill" id="pillTotal">Total: 0</span>
-          <span class="pill" id="pillSelected">Selected: 0</span>
-        </div>
+        <span class="pill" id="pillTotal">Total: 0</span>
         <button id="selectAllBtn" class="secondary" style="padding: 6px 12px; font-size: 13px;">Select All Visible</button>
+        <span class="pill" id="pillSelected">Selected: 0</span>
       </div>
        <div class="proxy-grid-container">
         <div id="proxyGrid" class="proxy-grid"></div>
