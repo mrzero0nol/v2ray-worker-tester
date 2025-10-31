@@ -227,16 +227,16 @@ function htmlPage() {
   .container{max-width:1200px; margin:0 auto; padding:16px;}
   header{
     text-align:center;
-    padding: 20px 0;
+    padding: 4px 0 20px;
   }
   .logo{
-    font-size: 48px;
+    font-size: 32px;
     font-weight: bold;
     color: var(--accent);
-    text-shadow: 0 0 10px var(--accent-2), 0 0 20px var(--accent);
+    text-shadow: 0 0 8px var(--accent-2), 0 0 15px var(--accent);
   }
-  header h1{font-size: 24px; margin: 0; color:#fff; letter-spacing: 0.5px;}
-  header p{margin:4px 0 0; color:var(--muted); font-size:14px;}
+  header h1{font-size: 18px; margin: 0; color:#fff; letter-spacing: 0.5px;}
+  header p{margin:2px 0 0; color:var(--muted); font-size:11px;}
 
   .panel{
     background: var(--panel);
