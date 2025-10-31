@@ -286,20 +286,60 @@ function htmlPage() {
   }
   button.secondary:hover{ background: #222; color: #fff; }
 
-  .table-wrap{
-    margin-top:16px; border-radius:10px; overflow-x:auto;
-    border:1px solid var(--card-border);
-    background: var(--panel);
+  .proxy-grid-container {
+    margin-top: 16px;
   }
-  table{width:100%; border-collapse:collapse; color:#fff; font-size:14px;}
-  thead th{
+  .proxy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .proxy-card {
     background: #1a0a0a;
-    color: var(--muted); padding:12px 15px; text-align:left;
-    font-weight:700; font-size:13px;
-    position: sticky; top: 0;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
   }
-  tbody td{padding:12px 15px; border-top:1px solid #2a1a1a; vertical-align:middle;}
-  tbody tr:hover td{background: rgba(220, 20, 60, 0.1);}
+  .proxy-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+  }
+  .proxy-card.selected {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 15px rgba(220, 20, 60, 0.5);
+    background: var(--accent);
+  }
+  .proxy-card-country {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .proxy-card.selected .proxy-card-country {
+      color: rgba(255,255,255,0.8);
+  }
+  .proxy-card-label {
+    font-size: 14px;
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .proxy-card-ip {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Courier New', Courier, monospace;
+  }
+  .proxy-card.selected .proxy-card-ip {
+      color: rgba(255,255,255,0.9);
+  }
 
   .counts{margin-top:12px; color:var(--muted); font-size:14px; text-align:center;}
   .paging-controls button { padding: 8px 12px; font-size: 13px; }
@@ -509,22 +549,15 @@ function htmlPage() {
     </button>
 
     <div class="panel">
-      <div class="badges" style="justify-content: space-between;">
-        <span class="pill" id="pillTotal">Total: 0</span>
-        <span class="pill" id="pillSelected">Selected: 0</span>
+      <div class="badges" style="justify-content: space-between; align-items:center; margin-bottom: 16px;">
+        <div>
+          <span class="pill" id="pillTotal">Total: 0</span>
+          <span class="pill" id="pillSelected">Selected: 0</span>
+        </div>
+        <button id="selectAllBtn" class="secondary" style="padding: 6px 12px; font-size: 13px;">Select All Visible</button>
       </div>
-      <div class="table-wrap">
-        <table id="tbl">
-          <thead>
-            <tr>
-              <th style="width:40px"><input type="checkbox" id="chkAllPage" title="Select all visible" /></th>
-              <th>Proxy Name</th>
-              <th>IP Address</th>
-              <th>Port</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
+       <div class="proxy-grid-container">
+        <div id="proxyGrid" class="proxy-grid"></div>
       </div>
       <div class="counts" id="counts"></div>
     </div>
@@ -622,8 +655,8 @@ let currentPage = 1;
 
 // Element Refs
 const elSearch = $("#search");
-const elTBody = $("#tbody");
-const elChkAllPage = $("#chkAllPage");
+const proxyGrid = $("#proxyGrid");
+const selectAllBtn = $("#selectAllBtn");
 const elCounts = $("#counts");
 const elPillTotal = $("#pillTotal");
 const elPillSelected = $("#pillSelected");
@@ -695,7 +728,7 @@ async function loadData() {
     filterData();
   } catch (err) {
     console.error("Failed to load data:", err);
-    elTBody.innerHTML = '<tr><td colspan="4" style="padding:16px;color:var(--accent);">Failed to load proxy list.</td></tr>';
+    proxyGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color:var(--accent);">Failed to load proxy list.</p>';
   } finally {
     showModalBtn.disabled = false;
     showModalBtn.textContent = 'Generate';
@@ -733,37 +766,46 @@ function render() {
   const start = (currentPage - 1) * PAGE_SIZE;
   const slice = FILTERED_ITEMS.slice(start, start + PAGE_SIZE);
 
-  elTBody.innerHTML = slice.map(it => {
-    const k = keyOf(it);
-    const checked = SELECTED.has(k) ? "checked" : "";
-    const name = it.label ? escapeHtml(it.label) : "(No Name)";
-    return '<tr>' +
-      '<td><input type="checkbox" class="rowchk" data-key="' + k + '" ' + checked + ' /></td>' +
-      '<td>' + name + '</td>' +
-      '<td>' + it.ip + '</td>' +
-      '<td>' + it.port + '</td>' +
-    '</tr>';
-  }).join('') || '<tr><td colspan="4" style="padding:16px;text-align:center;">No data found.</td></tr>';
+  proxyGrid.innerHTML = ''; // Clear grid
 
-  bindRowChecks();
+  if (slice.length === 0) {
+    proxyGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No data found.</p>';
+  } else {
+    slice.forEach(it => {
+      const k = keyOf(it);
+      const card = document.createElement('div');
+      card.className = 'proxy-card';
+      if (SELECTED.has(k)) {
+        card.classList.add('selected');
+      }
+      card.dataset.key = k;
+      card.innerHTML =
+        '<div class="proxy-card-country">' + escapeHtml(it.country) + '</div>' +
+        '<div class="proxy-card-label" title="' + escapeHtml(it.label) + '">' + (it.label ? escapeHtml(it.label) : '(No Name)') + '</div>' +
+        '<div class="proxy-card-ip">' + it.ip + ':' + it.port + '</div>';
 
-  elChkAllPage.checked = slice.length > 0 && slice.every(it => SELECTED.has(keyOf(it)));
+      card.addEventListener('click', () => {
+        toggleSelection(card, it);
+      });
+      proxyGrid.appendChild(card);
+    });
+  }
+
   elCounts.innerHTML = renderPaging(total, pages);
   bindPaging();
   updatePills();
 }
 
-function bindRowChecks() {
-  elTBody.querySelectorAll(".rowchk").forEach(chk => {
-    chk.addEventListener("change", () => {
-      const key = chk.getAttribute("data-key");
-      const item = ALL_ITEMS.find(x => keyOf(x) === key);
-      if (!item) return;
-      if (chk.checked) SELECTED.set(key, item);
-      else SELECTED.delete(key);
-      updatePills();
-    });
-  });
+function toggleSelection(cardElement, item) {
+    const key = keyOf(item);
+    if (SELECTED.has(key)) {
+        SELECTED.delete(key);
+        cardElement.classList.remove('selected');
+    } else {
+        SELECTED.set(key, item);
+        cardElement.classList.add('selected');
+    }
+    updatePills();
 }
 
 function bindPaging() {
@@ -902,14 +944,19 @@ document.querySelectorAll("button[data-copy]").forEach(b => {
   });
 });
 
-elChkAllPage.addEventListener("change", () => {
-  const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  if (elChkAllPage.checked) {
-    slice.forEach(it => SELECTED.set(keyOf(it), it));
-  } else {
-    slice.forEach(it => SELECTED.delete(keyOf(it)));
-  }
-  render();
+selectAllBtn.addEventListener("click", () => {
+    const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    // Cek apakah semua kartu yang terlihat sudah dipilih. Jika ya, batalkan pilihan semua. Jika tidak, pilih semua.
+    const allVisibleSelected = slice.every(it => SELECTED.has(keyOf(it)));
+
+    slice.forEach(it => {
+        if (allVisibleSelected) {
+            SELECTED.delete(keyOf(it));
+        } else {
+            SELECTED.set(keyOf(it), it);
+        }
+    });
+    render();
 });
 
 // Initial Load
