@@ -367,16 +367,45 @@ function htmlPage() {
   }
   .pill#pillSelected { background: var(--accent); }
 
-  .main-layout{display:grid; grid-template-columns: 1fr; gap:20px;}
-  @media (min-width:900px){
-    .main-layout{grid-template-columns: 1fr 400px;}
-  }
-
   .output-card h2{margin:0 0 12px 0; color:#fff; font-size:16px;}
   textarea{min-height:120px; resize:vertical; font-family: 'Courier New', Courier, monospace; background: #000;}
   .output-row{display:flex; flex-direction: column; gap:16px; margin-bottom: 16px;}
   @media (min-width: 600px) {
     .output-row{flex-direction: row;}
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal-content {
+    background: var(--panel);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 24px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
   }
 </style>
 </head>
@@ -388,57 +417,30 @@ function htmlPage() {
       <p>VLESS & Trojan Generator</p>
     </header>
 
-    <div class="main-layout">
-      <div class="panel">
-        <div class="controls">
-          <div>
-            <label for="sourceKey">Proxy Source</label>
-            <select id="sourceKey">
-              <option value="all">All (Combined)</option>
-              <option value="txt">proxyList.txt (raw)</option>
-              <option value="json">KvProxyList.json</option>
-            </select>
-          </div>
-          <div>
-            <label for="search">Search (Name/IP/Port)</label>
-            <input id="search" placeholder="e.g. Singapore, 43.218, :443" />
-          </div>
-          <div>
-            <label for="frontDomain">Front Domain</label>
-            <input id="frontDomain" value="%%FRONT_DOMAIN%%" />
-          </div>
-          <div>
-            <label for="sni">SNI</label>
-            <input id="sni" value="%%SNI%%" />
-          </div>
-          <div>
-            <label for="hostHeader">Host Header (optional)</label>
-            <input id="hostHeader" placeholder="Defaults to SNI" value="%%HOST_HEADER%%" />
-          </div>
-          <div>
-            <label for="cfTlsPort">TLS Port</label>
-            <input id="cfTlsPort" type="number" min="1" max="65535" value="%%CF_TLS_PORT%%" />
-          </div>
+    <div class="panel">
+      <div class="controls">
+        <div>
+          <label for="sourceKey">Proxy Source</label>
+          <select id="sourceKey">
+            <option value="all">All (Combined)</option>
+            <option value="txt">proxyList.txt (raw)</option>
+            <option value="json">KvProxyList.json</option>
+          </select>
         </div>
-        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--card-border);">
-          <label>Account Types</label>
-          <div style="display:flex; gap:16px; align-items:center;">
-            <label style="display:flex; align-items:center; gap:8px; font-weight:normal; color:#fff"><input id="genTrojan" type="checkbox" checked> Trojan</label>
-            <label style="display:flex; align-items:center; gap:8px; font-weight:normal; color:#fff"><input id="genVless" type="checkbox" checked> VLESS</label>
-          </div>
+        <div>
+          <label for="search">Search (Name/IP/Port)</label>
+          <input id="search" placeholder="e.g. Singapore, 43.218, :443" />
         </div>
       </div>
-
-      <div class="panel">
-        <h2>Generate</h2>
-        <p class="muted" style="font-size:14px; margin: 0 0 16px;">Select proxies from the list below, then click generate.</p>
-        <button id="btnGenerate" style="width:100%;" title="Generate for selected proxies">Generate for Selected Proxies</button>
+      <div class="toolbar" style="margin-top:20px;">
+        <button id="btnReload" class="secondary">Reload List</button>
+        <div style="flex-grow: 1;"></div>
+        <button id="btnShowGenerateModal" title="Generate for selected proxies">Generate for Selected Proxies</button>
       </div>
     </div>
 
     <div class="panel">
       <div class="toolbar">
-        <button id="btnReload" class="secondary">Reload List</button>
         <button id="btnSelectFiltered" class="secondary">Select All Visible</button>
         <button id="btnClearSelection" class="secondary">Clear Selection</button>
       </div>
@@ -484,6 +486,39 @@ function htmlPage() {
     </div>
   </div>
 
+  <div class="modal-overlay" id="generateModal">
+    <div class="modal-content">
+      <span class="modal-close" id="modalCloseBtn">&times;</span>
+      <h2>Generation Settings</h2>
+      <div class="controls" style="margin-top: 20px;">
+        <div>
+          <label for="frontDomain">Front Domain</label>
+          <input id="frontDomain" value="%%FRONT_DOMAIN%%" />
+        </div>
+        <div>
+          <label for="sni">SNI</label>
+          <input id="sni" value="%%SNI%%" />
+        </div>
+        <div>
+          <label for="hostHeader">Host Header (optional)</label>
+          <input id="hostHeader" placeholder="Defaults to SNI" value="%%HOST_HEADER%%" />
+        </div>
+        <div>
+          <label for="cfTlsPort">TLS Port</label>
+          <input id="cfTlsPort" type="number" min="1" max="65535" value="%%CF_TLS_PORT%%" />
+        </div>
+      </div>
+      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--card-border);">
+        <label>Account Types</label>
+        <div style="display:flex; gap:16px; align-items:center;">
+          <label style="display:flex; align-items:center; gap:8px; font-weight:normal; color:#fff"><input id="genTrojan" type="checkbox" checked> Trojan</label>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:normal; color:#fff"><input id="genVless" type="checkbox" checked> VLESS</label>
+        </div>
+      </div>
+      <button id="btnConfirmGenerate" style="width:100%; margin-top: 24px;">Confirm & Generate</button>
+    </div>
+  </div>
+
 <script>
 const $ = s => document.querySelector(s);
 const PAGE_SIZE = 200;
@@ -493,6 +528,7 @@ let FILTERED_ITEMS = [];
 let SELECTED = new Map(); // key => {ip, port, label}
 let currentPage = 1;
 
+// Element Refs
 const elSource = $("#sourceKey");
 const elSearch = $("#search");
 const elTBody = $("#tbody");
@@ -501,19 +537,28 @@ const elCounts = $("#counts");
 const elPillTotal = $("#pillTotal");
 const elPillFiltered = $("#pillFiltered");
 const elPillSelected = $("#pillSelected");
+const modal = $("#generateModal");
+const showModalBtn = $("#btnShowGenerateModal");
+const closeModalBtn = $("#modalCloseBtn");
+const confirmGenerateBtn = $("#btnConfirmGenerate");
 
+// Core Functions
 async function loadData() {
   const src = elSource.value;
-  // TODO: Add loading state
+  showModalBtn.disabled = true;
+  showModalBtn.textContent = 'Loading...';
   try {
     const res = await fetch(\`/api/proxies?source=\${encodeURIComponent(src)}\`);
     if (!res.ok) throw new Error('Network response was not ok');
     const j = await res.json();
     ALL_ITEMS = (j.items || []);
-    filterData(); // Apply initial filter/search
+    filterData();
   } catch (err) {
     console.error("Failed to load data:", err);
     elTBody.innerHTML = '<tr><td colspan="4" style="padding:16px;color:var(--accent);">Failed to load proxy list.</td></tr>';
+  } finally {
+    showModalBtn.disabled = false;
+    showModalBtn.textContent = 'Generate for Selected Proxies';
   }
 }
 
@@ -613,31 +658,14 @@ function escapeHtml(s) {
   }[c]));
 }
 
-// Event Listeners
-$("#btnReload").addEventListener("click", loadData);
-$("#search").addEventListener("input", () => {
-  clearTimeout(window.__deb);
-  window.__deb = setTimeout(filterData, 200);
-});
-$("#sourceKey").addEventListener("change", loadData);
-$("#btnSelectFiltered").addEventListener("click", () => {
-  const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  slice.forEach(it => SELECTED.set(keyOf(it), it));
-  render();
-});
-$("#btnClearSelection").addEventListener("click", () => {
-  SELECTED.clear();
-  render();
-});
-$("#btnGenerate").addEventListener("click", async () => {
+async function handleGenerate() {
   const selected = Array.from(SELECTED.values());
   if (!selected.length) {
     alert("Please select at least one proxy.");
     return;
   }
-  const btn = $("#btnGenerate");
-  btn.textContent = 'Generating...';
-  btn.disabled = true;
+  confirmGenerateBtn.textContent = 'Generating...';
+  confirmGenerateBtn.disabled = true;
 
   try {
     const payload = {
@@ -660,13 +688,46 @@ $("#btnGenerate").addEventListener("click", async () => {
     $("#outTrojan").value = (j.trojan || []).join("\\n");
     $("#outVless").value = (j.vless || []).join("\\n");
     $("#outCombined").value = j.combined || "";
+    modal.classList.remove("active");
   } catch (err) {
     alert("Failed to generate: " + err.message);
   } finally {
-    btn.textContent = 'Generate for Selected Proxies';
-    btn.disabled = false;
+    confirmGenerateBtn.textContent = 'Confirm & Generate';
+    confirmGenerateBtn.disabled = false;
   }
+}
+
+// Event Listeners
+$("#btnReload").addEventListener("click", loadData);
+$("#search").addEventListener("input", () => {
+  clearTimeout(window.__deb);
+  window.__deb = setTimeout(filterData, 200);
 });
+$("#sourceKey").addEventListener("change", loadData);
+$("#btnSelectFiltered").addEventListener("click", () => {
+  const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  slice.forEach(it => SELECTED.set(keyOf(it), it));
+  render();
+});
+$("#btnClearSelection").addEventListener("click", () => {
+  SELECTED.clear();
+  render();
+});
+
+showModalBtn.addEventListener("click", () => {
+  if (SELECTED.size === 0) {
+    alert("Please select at least one proxy before generating.");
+    return;
+  }
+  modal.classList.add("active");
+});
+
+closeModalBtn.addEventListener("click", () => modal.classList.remove("active"));
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) modal.classList.remove("active");
+});
+
+confirmGenerateBtn.addEventListener("click", handleGenerate);
 
 document.querySelectorAll("button[data-copy]").forEach(b => {
   b.addEventListener("click", async () => {
