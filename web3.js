@@ -549,13 +549,12 @@ const COUNTRY_CODES = new Set([
 
 function getCountryFromLabel(label) {
     if (!label) return 'Unknown';
-    // Find potential 2-letter country codes (standalone, uppercase)
-    const matches = label.toUpperCase().match(/\b([A-Z]{2})\b/g);
-    if (matches) {
-        for (const code of matches) {
-            if (COUNTRY_CODES.has(code)) {
-                return code;
-            }
+    // Split the label by common delimiters and check each part.
+    const words = label.toUpperCase().split(/[\s\[\]\(\)-.,|]+/);
+    for (const word of words) {
+        // Find the first 2-letter word that is a valid country code.
+        if (word.length === 2 && COUNTRY_CODES.has(word)) {
+            return word;
         }
     }
     return 'Unknown';
