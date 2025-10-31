@@ -353,10 +353,10 @@ function htmlPage() {
   }
   .fab-search {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
+    bottom: 20px;
+    left: 20px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: transparent;
     color: var(--muted);
