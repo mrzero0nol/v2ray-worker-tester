@@ -412,20 +412,21 @@ function htmlPage() {
   .splash-logo {
     width: 100px;
     margin-bottom: 16px;
-    filter: drop-shadow(0 0 5px var(--accent-2)) drop-shadow(0 0 10px var(--accent));
   }
   .splash-text {
-    color: #fff;
+    /* Match header h1 style */
     font-size: 18px;
-    font-family: 'Courier New', Courier, monospace;
-    text-shadow: 0 0 4px #fff, 0 0 10px var(--accent), 0 0 20px var(--accent);
+    margin: 0;
+    color: #fff;
+    letter-spacing: 0.5px;
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   }
 </style>
 </head>
 <body>
   <div id="splash-screen">
     <img src="https://i.postimg.cc/J04TF2Rm/20251031-150628.png" alt="Red Bunny Logo" class="splash-logo">
-    <p class="splash-text">red bunny</p>
+    <h1 class="splash-text">Red Bunny</h1>
   </div>
   <div class="container">
     <header>
