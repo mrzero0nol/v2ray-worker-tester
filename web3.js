@@ -391,9 +391,40 @@ function htmlPage() {
     font-size: 16px;
     font-weight: 600;
   }
+  #splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease-out;
+  }
+  #splash-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .splash-logo {
+    width: 100px;
+    margin-bottom: 16px;
+  }
+  .splash-text {
+    color: #fff;
+    font-size: 18px;
+    font-family: 'Courier New', Courier, monospace;
+  }
 </style>
 </head>
 <body>
+  <div id="splash-screen">
+    <img src="https://i.postimg.cc/J04TF2Rm/20251031-150628.png" alt="Red Bunny Logo" class="splash-logo">
+    <p class="splash-text">red bunny</p>
+  </div>
   <div class="container">
     <header>
       <div class="logo">RB</div>
@@ -776,6 +807,16 @@ elChkAllPage.addEventListener("change", () => {
 
 // Initial Load
 loadData();
+
+window.addEventListener('DOMContentLoaded', () => {
+  const splash = document.getElementById('splash-screen');
+  setTimeout(() => {
+    splash.classList.add('hidden');
+    setTimeout(() => {
+      splash.style.display = 'none';
+    }, 500); // Match CSS transition duration
+  }, 3000);
+});
 </script>
 </body>
 </html>`;
