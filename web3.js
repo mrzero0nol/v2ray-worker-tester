@@ -660,10 +660,9 @@ function populateCountryFilter() {
         const item = document.createElement('div');
         item.className = 'country-item';
         item.dataset.value = countryCode;
-        item.innerHTML = `
-            <span>${country}</span>
-            <div class="radio-icon"></div>
-        `;
+        item.innerHTML =
+            '<span>' + country + '</span>' +
+            '<div class="radio-icon"></div>';
         item.addEventListener('click', () => {
             selectedCountry = countryCode;
             selectedCountryEl.textContent = country;
@@ -687,7 +686,7 @@ async function loadData() {
   showModalBtn.disabled = true;
   showModalBtn.textContent = 'Loading...';
   try {
-    const res = await fetch(\`/api/proxies?source=\${encodeURIComponent(src)}\`);
+    const res = await fetch('/api/proxies?source=' + encodeURIComponent(src));
     if (!res.ok) throw new Error('Network response was not ok');
     const j = await res.json();
     ALL_ITEMS = j.items || [];
@@ -724,7 +723,7 @@ function filterData() {
   render();
 }
 
-function keyOf(x) { return \`\${x.ip}:\${x.port}\`; }
+function keyOf(x) { return x.ip + ':' + x.port; }
 
 function render() {
   const total = FILTERED_ITEMS.length;
@@ -737,12 +736,12 @@ function render() {
     const k = keyOf(it);
     const checked = SELECTED.has(k) ? "checked" : "";
     const name = it.label ? escapeHtml(it.label) : "(No Name)";
-    return \`<tr>
-      <td><input type="checkbox" class="rowchk" data-key="\${k}" \${checked} /></td>
-      <td>\${name}</td>
-      <td>\${it.ip}</td>
-      <td>\${it.port}</td>
-    </tr>\`;
+    return '<tr>' +
+      '<td><input type="checkbox" class="rowchk" data-key="' + k + '" ' + checked + ' /></td>' +
+      '<td>' + name + '</td>' +
+      '<td>' + it.ip + '</td>' +
+      '<td>' + it.port + '</td>' +
+    '</tr>';
   }).join('') || '<tr><td colspan="4" style="padding:16px;text-align:center;">No data found.</td></tr>';
 
   bindRowChecks();
@@ -780,21 +779,21 @@ function bindPaging() {
 }
 
 function renderPaging(total, pages) {
-  if (total <= PAGE_SIZE) return \`\${total} results\`;
+  if (total <= PAGE_SIZE) return total + ' results';
   let pageLinks = "";
   const maxShow = 5;
   let start = Math.max(1, currentPage - 2);
   let end = Math.min(pages, start + maxShow - 1);
   if (end - start + 1 < maxShow) start = Math.max(1, end - maxShow + 1);
 
-  pageLinks += \`<button class="secondary paging-controls" data-page="prev" \${currentPage === 1 ? 'disabled' : ''}>◀</button>\`;
+  pageLinks += '<button class="secondary paging-controls" data-page="prev" ' + (currentPage === 1 ? 'disabled' : '') + '>◀</button>';
   for (let p = start; p <= end; p++) {
     const act = p === currentPage ? "style='background:var(--accent); color:#fff; border-color:var(--accent)'" : "";
-    pageLinks += \`<button class="secondary paging-controls" data-page="\${p}" \${act}>\${p}</button>\`;
+    pageLinks += '<button class="secondary paging-controls" data-page="' + p + '" ' + act + '>' + p + '</button>';
   }
-  pageLinks += \`<button class="secondary paging-controls" data-page="next" \${currentPage === pages ? 'disabled' : ''}>▶</button>\`;
+  pageLinks += '<button class="secondary paging-controls" data-page="next" ' + (currentPage === pages ? 'disabled' : '') + '>▶</button>';
 
-  return \`Page \${currentPage}/\${pages} (\${total} results) <div style="margin-top:8px;">\${pageLinks}</div>\`;
+  return 'Page ' + currentPage + '/' + pages + ' (' + total + ' results) <div style="margin-top:8px;">' + pageLinks + '</div>';
 }
 
 function updatePills() {
