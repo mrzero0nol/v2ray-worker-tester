@@ -294,6 +294,18 @@ function htmlPage() {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 12px;
   }
+  @media (max-width: 600px) {
+    .proxy-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .proxy-card-label {
+        font-size: 13px;
+    }
+    .proxy-card-ip {
+        font-size: 12px;
+    }
+  }
   .proxy-card {
     background: #1a0a0a;
     border: 1px solid var(--card-border);
