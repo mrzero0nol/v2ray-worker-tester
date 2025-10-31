@@ -542,13 +542,32 @@ const closeModalBtn = $("#modalCloseBtn");
 const confirmGenerateBtn = $("#btnConfirmGenerate");
 
 // --- Helper Functions ---
+// Set of common ISO 3166-1 alpha-2 country codes, plus common aliases like UK
+const COUNTRY_CODES = new Set([
+    'US', 'SG', 'ID', 'JP', 'DE', 'GB', 'UK', 'NL', 'FR', 'CA', 'AU', 'HK', 'KR', 'IN', 'TW', 'RU', 'BR', 'ZA',
+    'AE', 'CH', 'SE', 'ES', 'IT', 'PL', 'TR', 'VN', 'MY', 'TH', 'PH', 'NZ', 'IE', 'CN', 'FI', 'NO'
+]);
+
+function getCountryFromLabel(label) {
+    if (!label) return 'Unknown';
+    // Split the label by common delimiters and check each part.
+    const words = label.toUpperCase().split(/[\s\[\]\(\)-.,|]+/);
+    for (const word of words) {
+        // Find the first 2-letter word that is a valid country code.
+        if (word.length === 2 %%SCRIPT_PLACEHOLDER%%%%SCRIPT_PLACEHOLDER%% COUNTRY_CODES.has(word)) {
+            return word;
+        }
+    }
+    return 'Unknown';
+}
+
 function populateCountryFilter() {
     const countries = new Set(ALL_ITEMS.map(item => item.country));
     const sortedCountries = [...countries].sort();
 
     elCountryFilter.innerHTML = '<option value="all">All Countries</option>';
     for (const country of sortedCountries) {
-        if (country && country !== 'Unknown') {
+        if (country %%SCRIPT_PLACEHOLDER%%%%SCRIPT_PLACEHOLDER%% country !== 'Unknown') {
             const option = document.createElement('option');
             option.value = country;
             option.textContent = country;
@@ -559,14 +578,14 @@ function populateCountryFilter() {
 
 // --- Core Functions ---
 async function loadData() {
-  const src = 'json'; // Hardcoded to use KvProxyList.json
+  const src = 'txt'; // Hardcoded to use proxyList.txt
   showModalBtn.disabled = true;
   showModalBtn.textContent = 'Loading...';
   try {
     const res = await fetch(\`/api/proxies?source=\${encodeURIComponent(src)}\`);
     if (!res.ok) throw new Error('Network response was not ok');
     const j = await res.json();
-    ALL_ITEMS = (j.items || []);
+    ALL_ITEMS = (j.items || []).map(item => ({...item, country: getCountryFromLabel(item.label)}));
     populateCountryFilter();
     filterData();
   } catch (err) {
@@ -600,192 +619,6 @@ function filterData() {
   currentPage = 1;
   render();
 }
-
-function keyOf(x) { return \`\${x.ip}:\${x.port}\`; }
-
-function render() {
-  const total = FILTERED_ITEMS.length;
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  if (currentPage > pages) currentPage = pages;
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const slice = FILTERED_ITEMS.slice(start, start + PAGE_SIZE);
-
-  elTBody.innerHTML = slice.map(it => {
-    const k = keyOf(it);
-    const checked = SELECTED.has(k) ? "checked" : "";
-    const name = it.label ? escapeHtml(it.label) : "(No Name)";
-    return \`<tr>
-      <td><input type="checkbox" class="rowchk" data-key="\${k}" \${checked} /></td>
-      <td>\${name}</td>
-      <td>\${it.ip}</td>
-      <td>\${it.port}</td>
-    </tr>\`;
-  }).join('') || '<tr><td colspan="4" style="padding:16px;text-align:center;">No data found.</td></tr>';
-
-  bindRowChecks();
-
-  elChkAllPage.checked = slice.length > 0 && slice.every(it => SELECTED.has(keyOf(it)));
-  elCounts.innerHTML = renderPaging(total, pages);
-  bindPaging();
-  updatePills();
-}
-
-function bindRowChecks() {
-  elTBody.querySelectorAll(".rowchk").forEach(chk => {
-    chk.addEventListener("change", () => {
-      const key = chk.getAttribute("data-key");
-      const item = ALL_ITEMS.find(x => keyOf(x) === key);
-      if (!item) return;
-      if (chk.checked) SELECTED.set(key, item);
-      else SELECTED.delete(key);
-      updatePills();
-    });
-  });
-}
-
-function bindPaging() {
-  elCounts.querySelectorAll("[data-page]").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      const p = btn.getAttribute("data-page");
-      if (p === "prev") currentPage = Math.max(1, currentPage - 1);
-      else if (p === "next") currentPage = Math.min(pages, currentPage + 1);
-      else currentPage = parseInt(p, 10);
-      render();
-    });
-  });
-}
-
-function renderPaging(total, pages) {
-  if (total <= PAGE_SIZE) return \`\${total} results\`;
-  let pageLinks = "";
-  const maxShow = 5;
-  let start = Math.max(1, currentPage - 2);
-  let end = Math.min(pages, start + maxShow - 1);
-  if (end - start + 1 < maxShow) start = Math.max(1, end - maxShow + 1);
-
-  pageLinks += \`<button class="secondary paging-controls" data-page="prev" \${currentPage === 1 ? 'disabled' : ''}>◀</button>\`;
-  for (let p = start; p <= end; p++) {
-    const act = p === currentPage ? "style='background:var(--accent); color:#fff; border-color:var(--accent)'" : "";
-    pageLinks += \`<button class="secondary paging-controls" data-page="\${p}" \${act}>\${p}</button>\`;
-  }
-  pageLinks += \`<button class="secondary paging-controls" data-page="next" \${currentPage === pages ? 'disabled' : ''}>▶</button>\`;
-
-  return \`Page \${currentPage}/\${pages} (\${total} results) <div style="margin-top:8px;">\${pageLinks}</div>\`;
-}
-
-function updatePills() {
-  elPillTotal.textContent = "Total: " + ALL_ITEMS.length;
-  elPillFiltered.textContent = "Visible: " + FILTERED_ITEMS.length;
-  elPillSelected.textContent = "Selected: " + SELECTED.size;
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}
-
-async function handleGenerate() {
-  const selected = Array.from(SELECTED.values());
-  if (!selected.length) {
-    alert("Please select at least one proxy.");
-    return;
-  }
-  confirmGenerateBtn.textContent = 'Generating...';
-  confirmGenerateBtn.disabled = true;
-
-  try {
-    const payload = {
-      selected,
-      frontDomain: $("#frontDomain").value.trim(),
-      sni: $("#sni").value.trim(),
-      hostHeader: $("#hostHeader").value.trim(),
-      cfTlsPort: +$("#cfTlsPort").value || 443,
-      genTrojan: $("#genTrojan").checked,
-      genVless: $("#genVless").checked
-    };
-    const res = await fetch("/generate", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const j = await res.json();
-    if (!j.ok) throw new Error(j.error || "Unknown error");
-
-    $("#outTrojan").value = (j.trojan || []).join("\\n");
-    $("#outVless").value = (j.vless || []).join("\\n");
-    $("#outCombined").value = j.combined || "";
-    modal.classList.remove("active");
-  } catch (err) {
-    alert("Failed to generate: " + err.message);
-  } finally {
-    confirmGenerateBtn.textContent = 'Confirm & Generate';
-    confirmGenerateBtn.disabled = false;
-  }
-}
-
-// --- Event Listeners ---
-$("#btnReload").addEventListener("click", loadData);
-$("#search").addEventListener("input", () => {
-  clearTimeout(window.__deb);
-  window.__deb = setTimeout(filterData, 200);
-});
-elCountryFilter.addEventListener("change", filterData);
-$("#btnSelectFiltered").addEventListener("click", () => {
-  const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  slice.forEach(it => SELECTED.set(keyOf(it), it));
-  render();
-});
-$("#btnClearSelection").addEventListener("click", () => {
-  SELECTED.clear();
-  render();
-});
-
-showModalBtn.addEventListener("click", () => {
-  if (SELECTED.size === 0) {
-    alert("Please select at least one proxy before generating.");
-    return;
-  }
-  modal.classList.add("active");
-});
-
-closeModalBtn.addEventListener("click", () => modal.classList.remove("active"));
-modal.addEventListener("click", (e) => {
-  if (e.target === modal) modal.classList.remove("active");
-});
-
-confirmGenerateBtn.addEventListener("click", handleGenerate);
-
-document.querySelectorAll("button[data-copy]").forEach(b => {
-  b.addEventListener("click", async () => {
-    const t = document.querySelector(b.getAttribute("data-copy"));
-    if (!t || !t.value) return;
-    try {
-      await navigator.clipboard.writeText(t.value);
-      b.textContent = "Copied!";
-    } catch {
-      t.select();
-      document.execCommand("copy");
-      b.textContent = "Copied!";
-    }
-    setTimeout(() => (b.textContent = "Copy"), 1500);
-  });
-});
-
-elChkAllPage.addEventListener("change", () => {
-  const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  if (elChkAllPage.checked) {
-    slice.forEach(it => SELECTED.set(keyOf(it), it));
-  } else {
-    slice.forEach(it => SELECTED.delete(keyOf(it)));
-  }
-  render();
-});
-
-// Initial Load
-loadData();
-</script>
 </body>
 </html>`;
 
