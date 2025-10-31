@@ -343,9 +343,8 @@ function htmlPage() {
     color: #fff;
     font-weight: 600;
     margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal; /* Allow wrapping */
+    word-break: break-word; /* Break long words */
   }
   .proxy-card-ip {
     font-size: 13px;
