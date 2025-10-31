@@ -564,7 +564,7 @@ async function loadData() {
     elTBody.innerHTML = '<tr><td colspan="4" style="padding:16px;color:var(--accent);">Failed to load proxy list.</td></tr>';
   } finally {
     showModalBtn.disabled = false;
-    showModalBtn.textContent = 'Generate for Selected Proxies';
+    showModalBtn.textContent = 'Generate';
   }
 }
 
