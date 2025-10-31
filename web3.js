@@ -228,6 +228,10 @@ function htmlPage() {
   header{
     text-align:center;
     padding: 4px 0 20px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 999;
   }
   .logo{
     font-size: 32px;
