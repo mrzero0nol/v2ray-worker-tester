@@ -119,24 +119,19 @@ function parseTextProxies(text) {
   const items = [];
   for (let line of lines) {
     line = line.trim();
-    if (!line || line.startsWith("#") || line.length < 4) continue;
+    if (!line || line.startsWith("#")) continue;
 
-    let ip, port, label = "";
-    const m = line.match(/((\d{1,3}\.){3}\d{1,3})\s*[-:\s]\s*(\d{2,5})/);
-    if (m) {
-      ip = m[1];
-      port = parseInt(m[3], 10);
-      label = sanitizeLabel(line.replace(m[0], "").replace(/[|,;]+/g, " ").trim());
-    } else {
-      const m2 = line.match(/((\d{1,3}\.){3}\d{1,3})/);
-      if (m2) {
-        ip = m2[1];
-        port = 443;
-        label = sanitizeLabel(line.replace(m2[0], "").replace(/[|,;]+/g, " ").trim());
+    const parts = line.split(',');
+    if (parts.length >= 4) {
+      const ip = parts[0].trim();
+      const port = parseInt(parts[1].trim(), 10);
+      const country = parts[2].trim().toUpperCase();
+      const label = sanitizeLabel(parts.slice(3).join(',').trim()); // Join the rest for provider name
+
+      if (ip && port && country) {
+        items.push({ ip, port, country, label });
       }
     }
-
-    if (ip && port) items.push({ ip, port, label });
   }
   return items;
 }
@@ -152,9 +147,10 @@ function dedupeAndValidate(items) {
     const key = `${ip}:${port}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ ip, port, label: sanitizeLabel(it.label || "") });
+    out.push({ ip, port, label: sanitizeLabel(it.label || ""), country: it.country || 'Unknown' });
   }
   out.sort((a, b) => {
+    if (a.country !== b.country) return a.country < b.country ? -1 : 1;
     const la = a.label.toLowerCase(), lb = b.label.toLowerCase();
     if (la !== lb) return la < lb ? -1 : 1;
     if (a.ip !== b.ip) return a.ip < b.ip ? -1 : 1;
@@ -487,22 +483,6 @@ const closeModalBtn = $("#modalCloseBtn");
 const confirmGenerateBtn = $("#btnConfirmGenerate");
 
 // --- Helper Functions ---
-const COUNTRY_CODES = new Set([
-    'US', 'SG', 'ID', 'JP', 'DE', 'GB', 'UK', 'NL', 'FR', 'CA', 'AU', 'HK', 'KR', 'IN', 'TW', 'RU', 'BR', 'ZA',
-    'AE', 'CH', 'SE', 'ES', 'IT', 'PL', 'TR', 'VN', 'MY', 'TH', 'PH', 'NZ', 'IE', 'CN', 'FI', 'NO'
-]);
-
-function getCountryFromLabel(label) {
-    if (!label) return 'Unknown';
-    const words = label.toUpperCase().split(/[\s\[\]\\(\\)-.,|]+/);
-    for (const word of words) {
-        if (word.length === 2 && COUNTRY_CODES.has(word)) {
-            return word;
-        }
-    }
-    return 'Unknown';
-}
-
 function populateCountryFilter() {
     const countries = new Set(ALL_ITEMS.map(item => item.country));
     const sortedCountries = [...countries].sort();
@@ -527,7 +507,7 @@ async function loadData() {
     const res = await fetch(\`/api/proxies?source=\${encodeURIComponent(src)}\`);
     if (!res.ok) throw new Error('Network response was not ok');
     const j = await res.json();
-    ALL_ITEMS = (j.items || []).map(item => ({...item, country: getCountryFromLabel(item.label)}));
+    ALL_ITEMS = j.items || [];
     populateCountryFilter();
     filterData();
   } catch (err) {
