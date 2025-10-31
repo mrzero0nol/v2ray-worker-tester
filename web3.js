@@ -420,11 +420,9 @@ function htmlPage() {
     <div class="panel">
       <div class="controls">
         <div>
-          <label for="sourceKey">Proxy Source</label>
-          <select id="sourceKey">
-            <option value="all">All (Combined)</option>
-            <option value="txt">proxyList.txt (raw)</option>
-            <option value="json">KvProxyList.json</option>
+          <label for="countryFilter">Filter by Country</label>
+          <select id="countryFilter">
+            <option value="all">All Countries</option>
           </select>
         </div>
         <div>
@@ -529,8 +527,8 @@ let SELECTED = new Map(); // key => {ip, port, label}
 let currentPage = 1;
 
 // Element Refs
-const elSource = $("#sourceKey");
 const elSearch = $("#search");
+const elCountryFilter = $("#countryFilter");
 const elTBody = $("#tbody");
 const elChkAllPage = $("#chkAllPage");
 const elCounts = $("#counts");
@@ -542,16 +540,45 @@ const showModalBtn = $("#btnShowGenerateModal");
 const closeModalBtn = $("#modalCloseBtn");
 const confirmGenerateBtn = $("#btnConfirmGenerate");
 
-// Core Functions
+// --- Helper Functions ---
+function getCountryFromLabel(label) {
+    if (!label) return 'Unknown';
+    const parts = label.replace(/[^a-zA-Z\s]/g, '').trim().split(/\s+/);
+    const commonWords = new Set(['the', 'and', 'proxy', 'v2ray', 'vmess', 'vless', 'trojan', 'server', 'node', 'cdn']);
+    for (const part of parts) {
+        if (part.length > 2 && !commonWords.has(part.toLowerCase())) {
+            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+        }
+    }
+    return 'Unknown';
+}
+
+function populateCountryFilter() {
+    const countries = new Set(ALL_ITEMS.map(item => item.country));
+    const sortedCountries = [...countries].sort();
+
+    elCountryFilter.innerHTML = '<option value="all">All Countries</option>';
+    for (const country of sortedCountries) {
+        if (country && country !== 'Unknown') {
+            const option = document.createElement('option');
+            option.value = country;
+            option.textContent = country;
+            elCountryFilter.appendChild(option);
+        }
+    }
+}
+
+// --- Core Functions ---
 async function loadData() {
-  const src = elSource.value;
+  const src = 'txt'; // Hardcoded to use proxyList.txt
   showModalBtn.disabled = true;
   showModalBtn.textContent = 'Loading...';
   try {
     const res = await fetch(\`/api/proxies?source=\${encodeURIComponent(src)}\`);
     if (!res.ok) throw new Error('Network response was not ok');
     const j = await res.json();
-    ALL_ITEMS = (j.items || []);
+    ALL_ITEMS = (j.items || []).map(item => ({...item, country: getCountryFromLabel(item.label)}));
+    populateCountryFilter();
     filterData();
   } catch (err) {
     console.error("Failed to load data:", err);
@@ -564,11 +591,23 @@ async function loadData() {
 
 function filterData() {
   const q = elSearch.value.trim().toLowerCase();
-  FILTERED_ITEMS = q ? ALL_ITEMS.filter(x =>
-    (x.label || "").toLowerCase().includes(q) ||
-    (x.ip || "").toLowerCase().includes(q) ||
-    String(x.port || "").toLowerCase().includes(q)
-  ) : [...ALL_ITEMS];
+  const selectedCountry = elCountryFilter.value;
+
+  let items = ALL_ITEMS;
+
+  if (selectedCountry !== 'all') {
+    items = items.filter(x => x.country === selectedCountry);
+  }
+
+  if (q) {
+    items = items.filter(x =>
+      (x.label || "").toLowerCase().includes(q) ||
+      (x.ip || "").toLowerCase().includes(q) ||
+      String(x.port || "").toLowerCase().includes(q)
+    );
+  }
+
+  FILTERED_ITEMS = items;
   currentPage = 1;
   render();
 }
@@ -697,13 +736,13 @@ async function handleGenerate() {
   }
 }
 
-// Event Listeners
+// --- Event Listeners ---
 $("#btnReload").addEventListener("click", loadData);
 $("#search").addEventListener("input", () => {
   clearTimeout(window.__deb);
   window.__deb = setTimeout(filterData, 200);
 });
-$("#sourceKey").addEventListener("change", loadData);
+elCountryFilter.addEventListener("change", filterData);
 $("#btnSelectFiltered").addEventListener("click", () => {
   const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   slice.forEach(it => SELECTED.set(keyOf(it), it));
