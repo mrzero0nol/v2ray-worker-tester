@@ -267,58 +267,6 @@ function htmlPage() {
   }
   input::placeholder{color: #555;}
 
-  .custom-radio-list {
-    border: 1px solid #333;
-    border-radius: 8px;
-    max-height: 220px; /* Approx 5 items */
-    overflow-y: auto;
-    background: #000;
-  }
-  .custom-radio-list::-webkit-scrollbar {
-    width: 8px;
-  }
-  .custom-radio-list::-webkit-scrollbar-track {
-    background: #111;
-  }
-  .custom-radio-list::-webkit-scrollbar-thumb {
-    background: var(--accent);
-    border-radius: 4px;
-  }
-  .radio-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 14px;
-    cursor: pointer;
-    border-bottom: 1px solid #2a1a1a;
-  }
-  .radio-item:last-child {
-    border-bottom: none;
-  }
-  .radio-item:hover {
-    background: rgba(220, 20, 60, 0.1);
-  }
-  .radio-item input[type="radio"] {
-    display: none; /* Hide original radio */
-  }
-  .radio-item span {
-    flex-grow: 1;
-  }
-  .radio-item input[type="radio"] + span::after {
-    content: '';
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 2px solid #555;
-    background-color: #111;
-    float: right;
-  }
-  .radio-item input[type="radio"]:checked + span::after {
-    background-color: var(--accent);
-    border-color: var(--accent-2);
-  }
-
   .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items: center;}
   button{
     background: var(--accent);
@@ -540,10 +488,10 @@ function htmlPage() {
       <h2>Search & Filter</h2>
       <div class="controls" style="margin-top:20px;">
         <div>
-          <label>Filter by Country</label>
-          <div id="countryFilter" class="custom-radio-list">
-            <!-- Options will be populated by JS -->
-          </div>
+          <label for="countryFilter">Filter by Country</label>
+          <select id="countryFilter">
+            <option value="all">All Countries</option>
+          </select>
         </div>
         <div>
           <label for="search">Search (Name/IP/Port)</label>
@@ -586,7 +534,6 @@ function htmlPage() {
   </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
 const $ = s => document.querySelector(s);
 const PAGE_SIZE = 200;
 
@@ -621,21 +568,13 @@ function populateCountryFilter() {
     const countries = new Set(ALL_ITEMS.map(item => item.country));
     const sortedCountries = [...countries].sort();
 
-    elCountryFilter.innerHTML = ''; // Clear existing
-
-    // Add "All Countries"
-    const allLabel = document.createElement('label');
-    allLabel.className = 'radio-item';
-    allLabel.innerHTML = `<input type="radio" name="country" value="all" checked><span>All Countries</span>`;
-    elCountryFilter.appendChild(allLabel);
-
-    // Add other countries
+    elCountryFilter.innerHTML = '<option value="all">All Countries</option>';
     for (const country of sortedCountries) {
         if (country && country !== 'Unknown') {
-            const label = document.createElement('label');
-            label.className = 'radio-item';
-            label.innerHTML = `<input type="radio" name="country" value="${country}"><span>${country}</span>`;
-            elCountryFilter.appendChild(label);
+            const option = document.createElement('option');
+            option.value = country;
+            option.textContent = country;
+            elCountryFilter.appendChild(option);
         }
     }
 }
@@ -663,8 +602,7 @@ async function loadData() {
 
 function filterData() {
   const q = elSearch.value.trim().toLowerCase();
-  const selectedRadio = elCountryFilter.querySelector('input[name="country"]:checked');
-  const selectedCountry = selectedRadio ? selectedRadio.value : 'all';
+  const selectedCountry = elCountryFilter.value;
 
   let items = ALL_ITEMS;
 
@@ -814,13 +752,7 @@ elSearch.addEventListener("input", () => {
   clearTimeout(window.__deb);
   window.__deb = setTimeout(filterData, 200);
 });
-
-elCountryFilter.addEventListener("change", (e) => {
-    // Check if the event was triggered by a radio button
-    if (e.target.name === 'country') {
-        filterData();
-    }
-});
+elCountryFilter.addEventListener("change", filterData);
 
 showModalBtn.addEventListener("click", () => {
   if (SELECTED.size === 0) {
@@ -885,7 +817,6 @@ setTimeout(() => {
         splash.style.display = 'none';
     }, 500); // Match CSS transition duration
 }, 3000);
-});
 </script>
 </body>
 </html>`;
