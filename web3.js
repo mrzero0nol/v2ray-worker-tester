@@ -208,7 +208,7 @@ function htmlPage() {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Red Bunny</title>
+<title>Redbunny</title>
 <style>
   :root{
     --bg: #000;
@@ -234,10 +234,8 @@ function htmlPage() {
     z-index: 999;
   }
   .logo{
-    font-size: 32px;
-    font-weight: bold;
-    color: var(--accent);
-    text-shadow: 0 0 8px var(--accent-2), 0 0 15px var(--accent);
+    /* Adjusted for image logo */
+    margin-bottom: 8px; /* Add some space below the logo */
   }
   header h1{font-size: 18px; margin: 0; color:#fff; letter-spacing: 0.5px;}
   header p{margin:2px 0 0; color:var(--muted); font-size:11px;}
@@ -425,13 +423,13 @@ function htmlPage() {
 </head>
 <body>
   <div id="splash-screen">
-    <img src="https://i.postimg.cc/J04TF2Rm/20251031-150628.png" alt="Red Bunny Logo" class="splash-logo">
-    <h1 class="splash-text">Red Bunny</h1>
+    <img src="https://i.postimg.cc/J04TF2Rm/20251031-150628.png" alt="Redbunny Logo" class="splash-logo">
+    <h1 class="splash-text">Redbunny</h1>
   </div>
   <div class="container">
     <header>
-      <div class="logo">RB</div>
-      <h1>Red Bunny</h1>
+      <div class="logo"><img src="https://i.postimg.cc/HstGpzdk/redbunny1.png" alt="Redbunny Logo" style="height: 40px; vertical-align: middle;"></div>
+      <h1>Redbunny</h1>
       <p>VLESS & Trojan Generator</p>
     </header>
 
