@@ -419,6 +419,73 @@ function htmlPage() {
     letter-spacing: 0.5px;
     font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   }
+  .custom-select {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #000;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .custom-select:hover {
+    border-color: var(--accent);
+  }
+  .country-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 16px;
+  }
+  .country-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 10px;
+    border-bottom: 1px solid #2a1a1a;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .country-item:hover {
+    background: rgba(220, 20, 60, 0.1);
+  }
+  .country-item:last-child {
+    border-bottom: none;
+  }
+  .country-item span {
+    font-size: 16px;
+    color: #fff;
+  }
+  .radio-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .country-item.selected .radio-icon {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .radio-icon::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s;
+  }
+  .country-item.selected .radio-icon::after {
+    opacity: 1;
+    transform: scale(1);
+  }
 </style>
 </head>
 <body>
@@ -488,10 +555,11 @@ function htmlPage() {
       <h2>Search & Filter</h2>
       <div class="controls" style="margin-top:20px;">
         <div>
-          <label for="countryFilter">Filter by Country</label>
-          <select id="countryFilter">
-            <option value="all">All Countries</option>
-          </select>
+            <label>Filter by Country</label>
+            <div class="custom-select" id="countrySelector">
+                <span id="selectedCountry">All Countries</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
         </div>
         <div>
           <label for="search">Search (Name/IP/Port)</label>
@@ -533,6 +601,16 @@ function htmlPage() {
     </div>
   </div>
 
+  <div class="modal-overlay" id="countryModal">
+    <div class="modal-content">
+      <span class="modal-close" id="countryModalCloseBtn">&times;</span>
+      <h2>Select a Country</h2>
+      <div class="country-list" id="countryList">
+        <!-- Countries will be populated by JS -->
+      </div>
+    </div>
+  </div>
+
 <script>
 const $ = s => document.querySelector(s);
 const PAGE_SIZE = 200;
@@ -544,7 +622,6 @@ let currentPage = 1;
 
 // Element Refs
 const elSearch = $("#search");
-const elCountryFilter = $("#countryFilter");
 const elTBody = $("#tbody");
 const elChkAllPage = $("#chkAllPage");
 const elCounts = $("#counts");
@@ -561,21 +638,46 @@ const showSearchModalBtn = $("#btnShowSearchModal");
 const closeSearchModalBtn = $("#searchModalCloseBtn");
 const resultsModal = $("#resultsModal");
 const closeResultsModalBtn = $("#resultsModalCloseBtn");
+const countryModal = $("#countryModal");
+const countrySelector = $("#countrySelector");
+const countryList = $("#countryList");
+const selectedCountryEl = $("#selectedCountry");
+const closeCountryModalBtn = $("#countryModalCloseBtn");
 
 
 // --- Helper Functions ---
+let selectedCountry = 'all';
+
 function populateCountryFilter() {
     const countries = new Set(ALL_ITEMS.map(item => item.country));
-    const sortedCountries = [...countries].sort();
+    const sortedCountries = ['All Countries', ...[...countries].sort()];
 
-    elCountryFilter.innerHTML = '<option value="all">All Countries</option>';
+    countryList.innerHTML = ''; // Clear previous list
     for (const country of sortedCountries) {
-        if (country && country !== 'Unknown') {
-            const option = document.createElement('option');
-            option.value = country;
-            option.textContent = country;
-            elCountryFilter.appendChild(option);
-        }
+        if (!country || country === 'Unknown') continue;
+
+        const countryCode = country === 'All Countries' ? 'all' : country;
+        const item = document.createElement('div');
+        item.className = 'country-item';
+        item.dataset.value = countryCode;
+        item.innerHTML = `
+            <span>${country}</span>
+            <div class="radio-icon"></div>
+        `;
+        item.addEventListener('click', () => {
+            selectedCountry = countryCode;
+            selectedCountryEl.textContent = country;
+
+            // Update selected class
+            countryList.querySelectorAll('.country-item').forEach(it => it.classList.remove('selected'));
+            item.classList.add('selected');
+
+            setTimeout(() => {
+              countryModal.classList.remove('active');
+            }, 150);
+            filterData();
+        });
+        countryList.appendChild(item);
     }
 }
 
@@ -602,7 +704,6 @@ async function loadData() {
 
 function filterData() {
   const q = elSearch.value.trim().toLowerCase();
-  const selectedCountry = elCountryFilter.value;
 
   let items = ALL_ITEMS;
 
@@ -752,7 +853,6 @@ elSearch.addEventListener("input", () => {
   clearTimeout(window.__deb);
   window.__deb = setTimeout(filterData, 200);
 });
-elCountryFilter.addEventListener("change", filterData);
 
 showModalBtn.addEventListener("click", () => {
   if (SELECTED.size === 0) {
@@ -776,6 +876,12 @@ searchModal.addEventListener("click", (e) => {
 closeResultsModalBtn.addEventListener("click", () => resultsModal.classList.remove("active"));
 resultsModal.addEventListener("click", (e) => {
     if (e.target === resultsModal) resultsModal.classList.remove("active");
+});
+
+countrySelector.addEventListener("click", () => countryModal.classList.add("active"));
+closeCountryModalBtn.addEventListener("click", () => countryModal.classList.remove("active"));
+countryModal.addEventListener("click", (e) => {
+    if (e.target === countryModal) countryModal.classList.remove("active");
 });
 
 confirmGenerateBtn.addEventListener("click", handleGenerate);
