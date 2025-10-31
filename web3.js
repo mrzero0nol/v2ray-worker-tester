@@ -401,14 +401,13 @@ function htmlPage() {
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     </button>
 
-    <button class="fab-generate" id="btnShowGenerateModal" aria-label="Generate Proxies">
+    <button class="fab-generate" id="btnShowGenerateModal" aria-label="Generate">
       Generate
     </button>
 
     <div class="panel">
       <div class="badges" style="justify-content: flex-end;">
         <span class="pill" id="pillTotal">Total: 0</span>
-        <span class="pill" id="pillFiltered">Visible: 0</span>
         <span class="pill" id="pillSelected">Selected: 0</span>
       </div>
       <div class="table-wrap">
@@ -496,7 +495,7 @@ function htmlPage() {
           <label style="display:flex; align-items:center; gap:8px; font-weight:normal; color:#fff"><input id="genVless" type="checkbox" checked> VLESS</label>
         </div>
       </div>
-      <button id="btnConfirmGenerate" style="width:100%; margin-top: 24px;">Confirm & Generate</button>
+      <button id="btnConfirmGenerate" style="width:100%; margin-top: 24px;">Generate</button>
     </div>
   </div>
 
@@ -516,7 +515,6 @@ const elTBody = $("#tbody");
 const elChkAllPage = $("#chkAllPage");
 const elCounts = $("#counts");
 const elPillTotal = $("#pillTotal");
-const elPillFiltered = $("#pillFiltered");
 const elPillSelected = $("#pillSelected");
 
 // Modal Refs
@@ -664,7 +662,6 @@ function renderPaging(total, pages) {
 
 function updatePills() {
   elPillTotal.textContent = "Total: " + ALL_ITEMS.length;
-  elPillFiltered.textContent = "Visible: " + FILTERED_ITEMS.length;
   elPillSelected.textContent = "Selected: " + SELECTED.size;
 }
 
