@@ -429,9 +429,10 @@ function htmlPage() {
       </div>
       <div class="counts" id="counts"></div>
     </div>
-
-    <div class="panel output-card">
-        <h2>Results</h2>
+    <div class="modal-overlay" id="resultsModal">
+    <div class="modal-content">
+      <span class="modal-close" id="resultsModalCloseBtn">&times;</span>
+      <h2>Results</h2>
         <div class="output-row">
           <div>
             <label for="outTrojan">Trojan</label>
@@ -444,13 +445,11 @@ function htmlPage() {
             <button class="secondary" data-copy="#outVless" style="margin-top:8px;">Copy</button>
           </div>
         </div>
-
         <label for="outCombined">Combined</label>
         <textarea id="outCombined" readonly style="min-height:80px"></textarea>
         <button class="secondary" data-copy="#outCombined" style="margin-top:8px;">Copy All</button>
     </div>
   </div>
-
   <div class="modal-overlay" id="searchModal">
     <div class="modal-content">
       <span class="modal-close" id="searchModalCloseBtn">&times;</span>
@@ -469,7 +468,6 @@ function htmlPage() {
       </div>
     </div>
   </div>
-
   <div class="modal-overlay" id="generateModal">
     <div class="modal-content">
       <span class="modal-close" id="modalCloseBtn">&times;</span>
@@ -502,6 +500,7 @@ function htmlPage() {
       <button id="btnConfirmGenerate" style="width:100%; margin-top: 24px;">Generate</button>
     </div>
   </div>
+  </div>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -529,6 +528,8 @@ const confirmGenerateBtn = $("#btnConfirmGenerate");
 const searchModal = $("#searchModal");
 const showSearchModalBtn = $("#btnShowSearchModal");
 const closeSearchModalBtn = $("#searchModalCloseBtn");
+const resultsModal = $("#resultsModal");
+const closeResultsModalBtn = $("#resultsModalCloseBtn");
 
 
 // --- Helper Functions ---
@@ -706,6 +707,7 @@ async function handleGenerate() {
     $("#outVless").value = (j.vless || []).join("\\n");
     $("#outCombined").value = j.combined || "";
     modal.classList.remove("active");
+    resultsModal.classList.add("active");
   } catch (err) {
     alert("Failed to generate: " + err.message);
   } finally {
@@ -738,6 +740,11 @@ showSearchModalBtn.addEventListener("click", () => searchModal.classList.add("ac
 closeSearchModalBtn.addEventListener("click", () => searchModal.classList.remove("active"));
 searchModal.addEventListener("click", (e) => {
     if (e.target === searchModal) searchModal.classList.remove("active");
+});
+
+closeResultsModalBtn.addEventListener("click", () => resultsModal.classList.remove("active"));
+resultsModal.addEventListener("click", (e) => {
+    if (e.target === resultsModal) resultsModal.classList.remove("active");
 });
 
 confirmGenerateBtn.addEventListener("click", handleGenerate);
