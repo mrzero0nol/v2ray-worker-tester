@@ -566,14 +566,14 @@ function escapeHtml(s) {
     }[c]));
 }
 
-function keyOf(x) { return `${x.ip}:${x.port}`; }
+function keyOf(x) { return x.ip + ':' + x.port; }
 
 // --- Core Functions ---
 async function loadData() {
     el.fabGenerate.disabled = true;
     el.fabGenerate.textContent = '...';
     try {
-        const res = await fetch(`/api/proxies?source=txt`);
+        const res = await fetch("/api/proxies?source=txt");
         if (!res.ok) throw new Error('Network response was not ok');
         const j = await res.json();
         ALL_ITEMS = j.items || [];
@@ -581,7 +581,7 @@ async function loadData() {
         filterData();
     } catch (err) {
         console.error("Failed to load data:", err);
-        el.proxyGrid.innerHTML = `<p style="color:var(--accent);grid-column: 1 / -1;">Failed to load proxy list.</p>`;
+        el.proxyGrid.innerHTML = '<p style="color:var(--accent);grid-column: 1 / -1;">Failed to load proxy list.</p>';
     } finally {
         el.fabGenerate.disabled = false;
         el.fabGenerate.textContent = 'Generate';
@@ -621,12 +621,12 @@ function render() {
         const selectedClass = SELECTED.has(k) ? "selected" : "";
         const name = it.label ? escapeHtml(it.label) : "(No Name)";
         const country = it.country ? escapeHtml(it.country) : "Unknown";
-        return `<div class="proxy-card ${selectedClass}" data-key="${k}">
-            <div class="country">${country}</div>
-            <div class="label">${name}</div>
-            <div class="ip-port">${it.ip}:${it.port}</div>
-        </div>`;
-    }).join('') || `<p style="color:var(--muted);grid-column: 1 / -1;text-align:center;">No proxies found.</p>`;
+        return '<div class="proxy-card ' + selectedClass + '" data-key="' + k + '">' +
+            '<div class="country">' + country + '</div>' +
+            '<div class="label">' + name + '</div>' +
+            '<div class="ip-port">' + it.ip + ':' + it.port + '</div>' +
+        '</div>';
+    }).join('') || '<p style="color:var(--muted);grid-column: 1 / -1;text-align:center;">No proxies found.</p>';
 
     el.counts.innerHTML = renderPaging(total, totalPages);
     bindPaging();
@@ -634,20 +634,20 @@ function render() {
 }
 
 function renderPaging(total, pages) {
-    if (total <= PAGE_SIZE) return `${total} results`;
+    if (total <= PAGE_SIZE) return '' + total + ' results';
     let pageLinks = "";
     const maxShow = 5;
     let start = Math.max(1, currentPage - 2);
     let end = Math.min(pages, start + maxShow - 1);
     if (end - start + 1 < maxShow) start = Math.max(1, end - maxShow + 1);
 
-    pageLinks += `<button class="secondary paging-controls" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}>◀</button>`;
+    pageLinks += '<button class="secondary paging-controls" data-page="prev" ' + (currentPage === 1 ? 'disabled' : '') + '>◀</button>';
     for (let p = start; p <= end; p++) {
         const act = p === currentPage ? "style='background:var(--accent); color:#fff; border-color:var(--accent)'" : "";
-        pageLinks += `<button class="secondary paging-controls" data-page="${p}" ${act}>${p}</button>`;
+        pageLinks += '<button class="secondary paging-controls" data-page="' + p + '" ' + act + '>' + p + '</button>';
     }
-    pageLinks += `<button class="secondary paging-controls" data-page="next" ${currentPage === pages ? 'disabled' : ''}>▶</button>`;
-    return `Page ${currentPage}/${pages} (${total} results) <div style="margin-top:8px;">${pageLinks}</div>`;
+    pageLinks += '<button class="secondary paging-controls" data-page="next" ' + (currentPage === pages ? 'disabled' : '') + '>▶</button>';
+    return 'Page ' + currentPage + '/' + pages + ' (' + total + ' results) <div style="margin-top:8px;">' + pageLinks + '</div>';
 }
 
 function bindPaging() {
