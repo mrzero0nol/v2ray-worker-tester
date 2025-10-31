@@ -512,286 +512,288 @@ function htmlPage() {
   </div>
 
 <script>
-const $ = s => document.querySelector(s);
-const PAGE_SIZE = 100;
+document.addEventListener('DOMContentLoaded', function() {
+    const $ = s => document.querySelector(s);
+    const PAGE_SIZE = 100;
 
-let ALL_ITEMS = [];
-let FILTERED_ITEMS = [];
-let SELECTED = new Map(); // key => {ip, port, label, country}
-let currentPage = 1;
+    let ALL_ITEMS = [];
+    let FILTERED_ITEMS = [];
+    let SELECTED = new Map(); // key => {ip, port, label, country}
+    let currentPage = 1;
 
-// --- Element Refs ---
-const el = {
-    search: $("#search"),
-    countryFilter: $("#countryFilter"),
-    proxyGrid: $("#proxyGrid"),
-    counts: $("#counts"),
-    pillTotal: $("#pillTotal"),
-    pillFiltered: $("#pillFiltered"),
-    pillSelected: $("#pillSelected"),
+    // --- Element Refs ---
+    const el = {
+        search: $("#search"),
+        countryFilter: $("#countryFilter"),
+        proxyGrid: $("#proxyGrid"),
+        counts: $("#counts"),
+        pillTotal: $("#pillTotal"),
+        pillFiltered: $("#pillFiltered"),
+        pillSelected: $("#pillSelected"),
 
-    // Modals & Panels
-    generateModal: $("#generateModal"),
-    outputModal: $("#outputModal"),
-    filterPanel: $("#filterPanel"),
+        // Modals & Panels
+        generateModal: $("#generateModal"),
+        outputModal: $("#outputModal"),
+        filterPanel: $("#filterPanel"),
 
-    // Buttons
-    fabSearch: $("#fabSearch"),
-    fabGenerate: $("#fabGenerate"),
-    closeFilterPanel: $("#closeFilterPanel"),
-    btnReload: $("#btnReload"),
-    btnSelectFiltered: $("#btnSelectFiltered"),
-    btnClearSelection: $("#btnClearSelection"),
-    btnConfirmGenerate: $("#btnConfirmGenerate"),
-};
+        // Buttons
+        fabSearch: $("#fabSearch"),
+        fabGenerate: $("#fabGenerate"),
+        closeFilterPanel: $("#closeFilterPanel"),
+        btnReload: $("#btnReload"),
+        btnSelectFiltered: $("#btnSelectFiltered"),
+        btnClearSelection: $("#btnClearSelection"),
+        btnConfirmGenerate: $("#btnConfirmGenerate"),
+    };
 
-// --- Helper Functions ---
-function populateCountryFilter() {
-    const countries = new Set(ALL_ITEMS.map(item => item.country));
-    const sortedCountries = [...countries].sort();
-    el.countryFilter.innerHTML = '<option value="all">All Countries</option>';
-    for (const country of sortedCountries) {
-        if (country && country !== 'Unknown') {
-            const option = document.createElement('option');
-            option.value = country;
-            option.textContent = country;
-            el.countryFilter.appendChild(option);
+    // --- Helper Functions ---
+    function populateCountryFilter() {
+        const countries = new Set(ALL_ITEMS.map(item => item.country));
+        const sortedCountries = [...countries].sort();
+        el.countryFilter.innerHTML = '<option value="all">All Countries</option>';
+        for (const country of sortedCountries) {
+            if (country && country !== 'Unknown') {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                el.countryFilter.appendChild(option);
+            }
         }
     }
-}
 
-function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, c => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    }[c]));
-}
-
-function keyOf(x) { return x.ip + ':' + x.port; }
-
-// --- Core Functions ---
-async function loadData() {
-    el.fabGenerate.disabled = true;
-    el.fabGenerate.textContent = '...';
-    try {
-        const res = await fetch("/api/proxies?source=txt");
-        if (!res.ok) throw new Error('Network response was not ok');
-        const j = await res.json();
-        ALL_ITEMS = j.items || [];
-        populateCountryFilter();
-        filterData();
-    } catch (err) {
-        console.error("Failed to load data:", err);
-        el.proxyGrid.innerHTML = '<p style="color:var(--accent);grid-column: 1 / -1;">Failed to load proxy list.</p>';
-    } finally {
-        el.fabGenerate.disabled = false;
-        el.fabGenerate.textContent = 'Generate';
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[c]));
     }
-}
 
-function filterData() {
-    const q = el.search.value.trim().toLowerCase();
-    const selectedCountry = el.countryFilter.value;
+    function keyOf(x) { return x.ip + ':' + x.port; }
 
-    let items = ALL_ITEMS;
-    if (selectedCountry !== 'all') {
-        items = items.filter(x => x.country === selectedCountry);
-    }
-    if (q) {
-        items = items.filter(x =>
-            (x.label || "").toLowerCase().includes(q) ||
-            (x.ip || "").toLowerCase().includes(q) ||
-            String(x.port || "").toLowerCase().includes(q)
-        );
-    }
-    FILTERED_ITEMS = items;
-    currentPage = 1;
-    render();
-}
-
-function render() {
-    const total = FILTERED_ITEMS.length;
-    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    if (currentPage > totalPages) currentPage = totalPages;
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    const slice = FILTERED_ITEMS.slice(start, end);
-
-    el.proxyGrid.innerHTML = slice.map(it => {
-        const k = keyOf(it);
-        const selectedClass = SELECTED.has(k) ? "selected" : "";
-        const name = it.label ? escapeHtml(it.label) : "(No Name)";
-        const country = it.country ? escapeHtml(it.country) : "Unknown";
-        return '<div class="proxy-card ' + selectedClass + '" data-key="' + k + '">' +
-            '<div class="country">' + country + '</div>' +
-            '<div class="label">' + name + '</div>' +
-            '<div class="ip-port">' + it.ip + ':' + it.port + '</div>' +
-        '</div>';
-    }).join('') || '<p style="color:var(--muted);grid-column: 1 / -1;text-align:center;">No proxies found.</p>';
-
-    el.counts.innerHTML = renderPaging(total, totalPages);
-    bindPaging();
-    updatePills();
-}
-
-function renderPaging(total, pages) {
-    if (total <= PAGE_SIZE) return '' + total + ' results';
-    let pageLinks = "";
-    const maxShow = 5;
-    let start = Math.max(1, currentPage - 2);
-    let end = Math.min(pages, start + maxShow - 1);
-    if (end - start + 1 < maxShow) start = Math.max(1, end - maxShow + 1);
-
-    pageLinks += '<button class="secondary paging-controls" data-page="prev" ' + (currentPage === 1 ? 'disabled' : '') + '>◀</button>';
-    for (let p = start; p <= end; p++) {
-        const act = p === currentPage ? "style='background:var(--accent); color:#fff; border-color:var(--accent)'" : "";
-        pageLinks += '<button class="secondary paging-controls" data-page="' + p + '" ' + act + '>' + p + '</button>';
-    }
-    pageLinks += '<button class="secondary paging-controls" data-page="next" ' + (currentPage === pages ? 'disabled' : '') + '>▶</button>';
-    return 'Page ' + currentPage + '/' + pages + ' (' + total + ' results) <div style="margin-top:8px;">' + pageLinks + '</div>';
-}
-
-function bindPaging() {
-    el.counts.querySelectorAll("[data-page]").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            const p = btn.getAttribute("data-page");
-            if (p === "prev") currentPage = Math.max(1, currentPage - 1);
-            else if (p === "next") currentPage = Math.min(Math.ceil(FILTERED_ITEMS.length / PAGE_SIZE), currentPage + 1);
-            else currentPage = parseInt(p, 10);
-            render();
-        });
-    });
-}
-
-function updatePills() {
-    el.pillTotal.textContent = "Total: " + ALL_ITEMS.length;
-    el.pillFiltered.textContent = "Visible: " + FILTERED_ITEMS.length;
-    el.pillSelected.textContent = "Selected: " + SELECTED.size;
-}
-
-async function handleGenerate() {
-    const selected = Array.from(SELECTED.values());
-    if (selected.length === 0) {
-        alert("Please select at least one proxy.");
-        return;
-    }
-    el.btnConfirmGenerate.textContent = 'Generating...';
-    el.btnConfirmGenerate.disabled = true;
-
-    try {
-        const payload = {
-            selected,
-            frontDomain: $("#frontDomain").value.trim(),
-            sni: $("#sni").value.trim(),
-            hostHeader: $("#hostHeader").value.trim(),
-            cfTlsPort: +$("#cfTlsPort").value || 443,
-            genTrojan: $("#genTrojan").checked,
-            genVless: $("#genVless").checked
-        };
-        const res = await fetch("/generate", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        const j = await res.json();
-        if (!j.ok) throw new Error(j.error || "Unknown error");
-
-        $("#outTrojan").value = (j.trojan || []).join("\n");
-        $("#outVless").value = (j.vless || []).join("\n");
-        $("#outCombined").value = j.combined || "";
-
-        el.generateModal.classList.remove("active");
-        el.outputModal.classList.add("active");
-
-    } catch (err) {
-        alert("Failed to generate: " + err.message);
-    } finally {
-        el.btnConfirmGenerate.textContent = 'Confirm & Generate';
-        el.btnConfirmGenerate.disabled = false;
-    }
-}
-
-// --- Event Listeners ---
-el.btnReload.addEventListener("click", loadData);
-el.search.addEventListener("input", () => {
-    clearTimeout(window.__deb);
-    window.__deb = setTimeout(filterData, 200);
-});
-el.countryFilter.addEventListener("change", filterData);
-
-el.btnSelectFiltered.addEventListener("click", () => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const slice = FILTERED_ITEMS.slice(start, start + PAGE_SIZE);
-    slice.forEach(it => SELECTED.set(keyOf(it), it));
-    render();
-});
-el.btnClearSelection.addEventListener("click", () => {
-    SELECTED.clear();
-    render();
-});
-
-// Proxy Card Selection
-el.proxyGrid.addEventListener("click", (e) => {
-    const card = e.target.closest(".proxy-card");
-    if (!card) return;
-    const key = card.getAttribute("data-key");
-    const item = ALL_ITEMS.find(x => keyOf(x) === key);
-    if (!item) return;
-
-    if (SELECTED.has(key)) {
-        SELECTED.delete(key);
-        card.classList.remove("selected");
-    } else {
-        SELECTED.set(key, item);
-        card.classList.add("selected");
-    }
-    updatePills();
-});
-
-// Panel & Modal Controls
-el.fabSearch.addEventListener("click", () => el.filterPanel.classList.add("open"));
-el.closeFilterPanel.addEventListener("click", () => el.filterPanel.classList.remove("open"));
-
-el.fabGenerate.addEventListener("click", () => {
-    if (SELECTED.size === 0) {
-        alert("Please select at least one proxy before generating.");
-        return;
-    }
-    el.generateModal.classList.add("active");
-});
-el.btnConfirmGenerate.addEventListener("click", handleGenerate);
-
-// Generic modal close logic
-document.querySelectorAll(".modal-overlay").forEach(modal => {
-    modal.addEventListener("click", (e) => {
-        if (e.target === modal) modal.classList.remove("active");
-    });
-});
-document.querySelectorAll(".modal-close").forEach(btn => {
-    btn.addEventListener("click", () => {
-        btn.closest(".modal-overlay").classList.remove("active");
-    });
-});
-
-// Clipboard copy
-document.querySelectorAll("button[data-copy]").forEach(b => {
-    b.addEventListener("click", async () => {
-        const t = $(b.getAttribute("data-copy"));
-        if (!t || !t.value) return;
+    // --- Core Functions ---
+    async function loadData() {
+        el.fabGenerate.disabled = true;
+        el.fabGenerate.textContent = '...';
         try {
-            await navigator.clipboard.writeText(t.value);
-            b.textContent = "Copied!";
-        } catch {
-            t.select();
-            document.execCommand("copy");
-            b.textContent = "Copied!";
+            const res = await fetch("/api/proxies?source=txt");
+            if (!res.ok) throw new Error('Network response was not ok');
+            const j = await res.json();
+            ALL_ITEMS = j.items || [];
+            populateCountryFilter();
+            filterData();
+        } catch (err) {
+            console.error("Failed to load data:", err);
+            el.proxyGrid.innerHTML = '<p style="color:var(--accent);grid-column: 1 / -1;">Failed to load proxy list.</p>';
+        } finally {
+            el.fabGenerate.disabled = false;
+            el.fabGenerate.textContent = 'Generate';
         }
-        setTimeout(() => (b.textContent = "Copy"), 1500);
-    });
-});
+    }
 
-// --- Initial Load ---
-loadData();
+    function filterData() {
+        const q = el.search.value.trim().toLowerCase();
+        const selectedCountry = el.countryFilter.value;
+
+        let items = ALL_ITEMS;
+        if (selectedCountry !== 'all') {
+            items = items.filter(x => x.country === selectedCountry);
+        }
+        if (q) {
+            items = items.filter(x =>
+                (x.label || "").toLowerCase().includes(q) ||
+                (x.ip || "").toLowerCase().includes(q) ||
+                String(x.port || "").toLowerCase().includes(q)
+            );
+        }
+        FILTERED_ITEMS = items;
+        currentPage = 1;
+        render();
+    }
+
+    function render() {
+        const total = FILTERED_ITEMS.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const slice = FILTERED_ITEMS.slice(start, end);
+
+        el.proxyGrid.innerHTML = slice.map(it => {
+            const k = keyOf(it);
+            const selectedClass = SELECTED.has(k) ? "selected" : "";
+            const name = it.label ? escapeHtml(it.label) : "(No Name)";
+            const country = it.country ? escapeHtml(it.country) : "Unknown";
+            return '<div class="proxy-card ' + selectedClass + '" data-key="' + k + '">' +
+                '<div class="country">' + country + '</div>' +
+                '<div class="label">' + name + '</div>' +
+                '<div class="ip-port">' + it.ip + ':' + it.port + '</div>' +
+            '</div>';
+        }).join('') || '<p style="color:var(--muted);grid-column: 1 / -1;text-align:center;">No proxies found.</p>';
+
+        el.counts.innerHTML = renderPaging(total, totalPages);
+        bindPaging();
+        updatePills();
+    }
+
+    function renderPaging(total, pages) {
+        if (total <= PAGE_SIZE) return '' + total + ' results';
+        let pageLinks = "";
+        const maxShow = 5;
+        let start = Math.max(1, currentPage - 2);
+        let end = Math.min(pages, start + maxShow - 1);
+        if (end - start + 1 < maxShow) start = Math.max(1, end - maxShow + 1);
+
+        pageLinks += '<button class="secondary paging-controls" data-page="prev" ' + (currentPage === 1 ? 'disabled' : '') + '>◀</button>';
+        for (let p = start; p <= end; p++) {
+            const act = p === currentPage ? "style='background:var(--accent); color:#fff; border-color:var(--accent)'" : "";
+            pageLinks += '<button class="secondary paging-controls" data-page="' + p + '" ' + act + '>' + p + '</button>';
+        }
+        pageLinks += '<button class="secondary paging-controls" data-page="next" ' + (currentPage === pages ? 'disabled' : '') + '>▶</button>';
+        return 'Page ' + currentPage + '/' + pages + ' (' + total + ' results) <div style="margin-top:8px;">' + pageLinks + '</div>';
+    }
+
+    function bindPaging() {
+        el.counts.querySelectorAll("[data-page]").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                const p = btn.getAttribute("data-page");
+                if (p === "prev") currentPage = Math.max(1, currentPage - 1);
+                else if (p === "next") currentPage = Math.min(Math.ceil(FILTERED_ITEMS.length / PAGE_SIZE), currentPage + 1);
+                else currentPage = parseInt(p, 10);
+                render();
+            });
+        });
+    }
+
+    function updatePills() {
+        el.pillTotal.textContent = "Total: " + ALL_ITEMS.length;
+        el.pillFiltered.textContent = "Visible: " + FILTERED_ITEMS.length;
+        el.pillSelected.textContent = "Selected: " + SELECTED.size;
+    }
+
+    async function handleGenerate() {
+        const selected = Array.from(SELECTED.values());
+        if (selected.length === 0) {
+            alert("Please select at least one proxy.");
+            return;
+        }
+        el.btnConfirmGenerate.textContent = 'Generating...';
+        el.btnConfirmGenerate.disabled = true;
+
+        try {
+            const payload = {
+                selected,
+                frontDomain: $("#frontDomain").value.trim(),
+                sni: $("#sni").value.trim(),
+                hostHeader: $("#hostHeader").value.trim(),
+                cfTlsPort: +$("#cfTlsPort").value || 443,
+                genTrojan: $("#genTrojan").checked,
+                genVless: $("#genVless").checked
+            };
+            const res = await fetch("/generate", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const j = await res.json();
+            if (!j.ok) throw new Error(j.error || "Unknown error");
+
+            $("#outTrojan").value = (j.trojan || []).join("\n");
+            $("#outVless").value = (j.vless || []).join("\n");
+            $("#outCombined").value = j.combined || "";
+
+            el.generateModal.classList.remove("active");
+            el.outputModal.classList.add("active");
+
+        } catch (err) {
+            alert("Failed to generate: " + err.message);
+        } finally {
+            el.btnConfirmGenerate.textContent = 'Confirm & Generate';
+            el.btnConfirmGenerate.disabled = false;
+        }
+    }
+
+    // --- Event Listeners ---
+    el.btnReload.addEventListener("click", loadData);
+    el.search.addEventListener("input", () => {
+        clearTimeout(window.__deb);
+        window.__deb = setTimeout(filterData, 200);
+    });
+    el.countryFilter.addEventListener("change", filterData);
+
+    el.btnSelectFiltered.addEventListener("click", () => {
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const slice = FILTERED_ITEMS.slice(start, start + PAGE_SIZE);
+        slice.forEach(it => SELECTED.set(keyOf(it), it));
+        render();
+    });
+    el.btnClearSelection.addEventListener("click", () => {
+        SELECTED.clear();
+        render();
+    });
+
+    // Proxy Card Selection
+    el.proxyGrid.addEventListener("click", (e) => {
+        const card = e.target.closest(".proxy-card");
+        if (!card) return;
+        const key = card.getAttribute("data-key");
+        const item = ALL_ITEMS.find(x => keyOf(x) === key);
+        if (!item) return;
+
+        if (SELECTED.has(key)) {
+            SELECTED.delete(key);
+            card.classList.remove("selected");
+        } else {
+            SELECTED.set(key, item);
+            card.classList.add("selected");
+        }
+        updatePills();
+    });
+
+    // Panel & Modal Controls
+    el.fabSearch.addEventListener("click", () => el.filterPanel.classList.add("open"));
+    el.closeFilterPanel.addEventListener("click", () => el.filterPanel.classList.remove("open"));
+
+    el.fabGenerate.addEventListener("click", () => {
+        if (SELECTED.size === 0) {
+            alert("Please select at least one proxy before generating.");
+            return;
+        }
+        el.generateModal.classList.add("active");
+    });
+    el.btnConfirmGenerate.addEventListener("click", handleGenerate);
+
+    // Generic modal close logic
+    document.querySelectorAll(".modal-overlay").forEach(modal => {
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) modal.classList.remove("active");
+        });
+    });
+    document.querySelectorAll(".modal-close").forEach(btn => {
+        btn.addEventListener("click", () => {
+            btn.closest(".modal-overlay").classList.remove("active");
+        });
+    });
+
+    // Clipboard copy
+    document.querySelectorAll("button[data-copy]").forEach(b => {
+        b.addEventListener("click", async () => {
+            const t = $(b.getAttribute("data-copy"));
+            if (!t || !t.value) return;
+            try {
+                await navigator.clipboard.writeText(t.value);
+                b.textContent = "Copied!";
+            } catch {
+                t.select();
+                document.execCommand("copy");
+                b.textContent = "Copied!";
+            }
+            setTimeout(() => (b.textContent = "Copy"), 1500);
+        });
+    });
+
+    // --- Initial Load ---
+    loadData();
+});
 </script>
 </body>
 </html>`;
