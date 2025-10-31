@@ -371,9 +371,10 @@ function htmlPage() {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
+    width: auto;
+    height: 48px;
+    padding: 0 24px;
+    border-radius: 24px;
     background: var(--accent);
     color: white;
     display: flex;
@@ -383,7 +384,8 @@ function htmlPage() {
     cursor: pointer;
     z-index: 1001;
     border: none;
-    font-size: 24px;
+    font-size: 16px;
+    font-weight: 600;
   }
 </style>
 </head>
@@ -400,7 +402,7 @@ function htmlPage() {
     </button>
 
     <button class="fab-generate" id="btnShowGenerateModal" aria-label="Generate Proxies">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+      Generate
     </button>
 
     <div class="panel">
