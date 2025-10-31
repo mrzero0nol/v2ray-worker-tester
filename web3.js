@@ -367,6 +367,24 @@ function htmlPage() {
     border: none;
     font-size: 24px;
   }
+  .fab-generate {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    cursor: pointer;
+    z-index: 1001;
+    border: none;
+    font-size: 24px;
+  }
 </style>
 </head>
 <body>
@@ -381,15 +399,12 @@ function htmlPage() {
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     </button>
 
+    <button class="fab-generate" id="btnShowGenerateModal" aria-label="Generate Proxies">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+    </button>
+
     <div class="panel">
-      <div class="toolbar">
-        <button id="btnReload" class="secondary">Reload List</button>
-        <button id="btnSelectFiltered" class="secondary">Select All Visible</button>
-        <button id="btnClearSelection" class="secondary">Clear Selection</button>
-        <div style="flex-grow: 1;"></div>
-        <button id="btnShowGenerateModal" title="Generate for selected proxies">Generate for Selected Proxies</button>
-      </div>
-      <div class="badges">
+      <div class="badges" style="justify-content: flex-end;">
         <span class="pill" id="pillTotal">Total: 0</span>
         <span class="pill" id="pillFiltered">Visible: 0</span>
         <span class="pill" id="pillSelected">Selected: 0</span>
@@ -697,21 +712,11 @@ async function handleGenerate() {
 }
 
 // --- Event Listeners ---
-$("#btnReload").addEventListener("click", loadData);
-$("#search").addEventListener("input", () => {
+elSearch.addEventListener("input", () => {
   clearTimeout(window.__deb);
   window.__deb = setTimeout(filterData, 200);
 });
 elCountryFilter.addEventListener("change", filterData);
-$("#btnSelectFiltered").addEventListener("click", () => {
-  const slice = FILTERED_ITEMS.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  slice.forEach(it => SELECTED.set(keyOf(it), it));
-  render();
-});
-$("#btnClearSelection").addEventListener("click", () => {
-  SELECTED.clear();
-  render();
-});
 
 showModalBtn.addEventListener("click", () => {
   if (SELECTED.size === 0) {
