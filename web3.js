@@ -509,7 +509,7 @@ function htmlPage() {
     </button>
 
     <div class="panel">
-      <div class="badges" style="justify-content: flex-end;">
+      <div class="badges" style="justify-content: space-between;">
         <span class="pill" id="pillTotal">Total: 0</span>
         <span class="pill" id="pillSelected">Selected: 0</span>
       </div>
