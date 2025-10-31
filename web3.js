@@ -412,11 +412,13 @@ function htmlPage() {
   .splash-logo {
     width: 100px;
     margin-bottom: 16px;
+    filter: drop-shadow(0 0 5px var(--accent-2)) drop-shadow(0 0 10px var(--accent));
   }
   .splash-text {
     color: #fff;
     font-size: 18px;
     font-family: 'Courier New', Courier, monospace;
+    text-shadow: 0 0 4px #fff, 0 0 10px var(--accent), 0 0 20px var(--accent);
   }
 </style>
 </head>
