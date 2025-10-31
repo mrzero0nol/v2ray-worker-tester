@@ -347,7 +347,7 @@ function htmlPage() {
   .modal-close {
     position: absolute;
     top: 10px;
-    right: 15px;
+    left: 15px;
     font-size: 24px;
     color: var(--muted);
     cursor: pointer;
