@@ -500,7 +500,6 @@ function htmlPage() {
       <button id="btnConfirmGenerate" style="width:100%; margin-top: 24px;">Generate</button>
     </div>
   </div>
-  </div>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -706,7 +705,7 @@ async function handleGenerate() {
     $("#outTrojan").value = (j.trojan || []).join("\\n");
     $("#outVless").value = (j.vless || []).join("\\n");
     $("#outCombined").value = j.combined || "";
-    modal.classList.remove("active");
+    generateModal.classList.remove("active");
     resultsModal.classList.add("active");
   } catch (err) {
     alert("Failed to generate: " + err.message);
