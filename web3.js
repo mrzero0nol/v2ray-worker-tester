@@ -265,6 +265,22 @@ function htmlPage() {
   input:focus, select:focus, textarea:focus {
     border-color: var(--accent);
   }
+  select[size] {
+    padding: 0; /* Remove padding for listbox */
+  }
+  select[size] option {
+    padding: 10px 14px;
+  }
+  select[size]::-webkit-scrollbar {
+    width: 8px;
+  }
+  select[size]::-webkit-scrollbar-track {
+    background: #111;
+  }
+  select[size]::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 4px;
+  }
   input::placeholder{color: #555;}
 
   .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items: center;}
@@ -489,7 +505,7 @@ function htmlPage() {
       <div class="controls" style="margin-top:20px;">
         <div>
           <label for="countryFilter">Filter by Country</label>
-          <select id="countryFilter">
+          <select id="countryFilter" size="5">
             <option value="all">All Countries</option>
           </select>
         </div>
