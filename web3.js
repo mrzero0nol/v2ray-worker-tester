@@ -358,15 +358,15 @@ function htmlPage() {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--accent);
-    color: white;
+    background: transparent;
+    color: var(--muted);
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     cursor: pointer;
     z-index: 1001;
-    border: none;
+    border: 1px solid #444;
     font-size: 24px;
   }
   .fab-generate {
@@ -673,6 +673,7 @@ function populateCountryFilter() {
 
             setTimeout(() => {
               countryModal.classList.remove('active');
+              searchModal.classList.remove('active');
             }, 150);
             filterData();
         });
