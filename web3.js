@@ -360,10 +360,21 @@ function htmlPage() {
 
   .badges{display:flex; gap:10px; flex-wrap:nowrap; align-items: center; justify-content: space-between; margin-top:10px;}
   .pill{
-    background: #333; color:#fff; padding:6px 12px;
-    border-radius:16px; font-size:13px;
+    display: inline-block;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 8px; /* Match button */
+    font-weight: 600;   /* Match button */
+    background: transparent;
+    border: 1px solid #444;
+    color: var(--muted);
+    vertical-align: middle; /* Ensure alignment */
   }
-  .pill#pillSelected { background: var(--accent); }
+  .pill#pillSelected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
 
   .output-card h2{margin:0 0 12px 0; color:#fff; font-size:16px;}
   textarea{min-height:120px; resize:vertical; font-family: 'Courier New', Courier, monospace; background: #000;}
